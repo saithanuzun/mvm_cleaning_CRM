@@ -107,19 +107,17 @@ public class GetAvailableSlotsHandler : IRequestHandler<GetAvailableSlotsRequest
         if (availabilityResponse == null || availabilityResponse.Count == 0)
             return new GetAvailableSlotsResponse { AvailableSlots = new List<AvailableSlotDto>(), Message = "No available slots" };
 
-        // Get contractor names
-        var contractorMap = new Dictionary<string, string>();
-        foreach (var contractorId in contractorIdList)
-        {
-            if (Guid.TryParse(contractorId, out var parsedId))
-            {
-                var contractor = await _contractorRepository.GetByIdAsync(parsedId, true);
-                if (contractor != null)
-                {
-                    contractorMap[contractorId] = contractor.FullName;
-                }
-            }
-        }
+        // Bulk fetch contractor names
+        var contractorGuids = contractorIdList
+            .Select(id => Guid.TryParse(id, out var g) ? g : Guid.Empty)
+            .Where(g => g != Guid.Empty)
+            .ToList();
+
+        var contractors = await _contractorRepository.GetList(
+            predicate: c => contractorGuids.Contains(c.Id),
+            noTracking: true);
+
+        var contractorMap = contractors.ToDictionary(c => c.Id.ToString(), c => c.FullName);
 
         // Format response
         var slots = new List<AvailableSlotDto>();
@@ -131,8 +129,8 @@ public class GetAvailableSlotsHandler : IRequestHandler<GetAvailableSlotsRequest
 
         foreach (var contractorGroup in groupedByContractor)
         {
-            var contractorName = contractorMap.ContainsKey(contractorGroup.Key) 
-                ? contractorMap[contractorGroup.Key] 
+            var contractorName = contractorMap.ContainsKey(contractorGroup.Key)
+                ? contractorMap[contractorGroup.Key]
                 : "Unknown";
 
             var availableSlots = contractorGroup.Where(s => s.Available).ToList();
@@ -152,8 +150,8 @@ public class GetAvailableSlotsHandler : IRequestHandler<GetAvailableSlotsRequest
             }
         }
 
-        return new GetAvailableSlotsResponse 
-        { 
+        return new GetAvailableSlotsResponse
+        {
             AvailableSlots = slots.OrderBy(s => s.StartTime).ToList(),
             Message = slots.Any() ? "Slots found" : "No available slots"
         };

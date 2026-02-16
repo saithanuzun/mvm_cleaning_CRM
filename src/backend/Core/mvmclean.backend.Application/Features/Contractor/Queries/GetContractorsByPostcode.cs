@@ -20,7 +20,7 @@ public class GetContractorsByPostcodeResponse
 public class GetContractorByPostcodeHandler : IRequestHandler<GetContractorsByPostcodeRequest, GetContractorsByPostcodeResponse>
 {
     private IContractorRepository _contractorRepository;
-    
+
 
     public GetContractorByPostcodeHandler(IBookingRepository bookingRepository, IContractorRepository contractorRepository)
     {
@@ -31,15 +31,16 @@ public class GetContractorByPostcodeHandler : IRequestHandler<GetContractorsByPo
     public async Task<GetContractorsByPostcodeResponse> Handle(GetContractorsByPostcodeRequest request, CancellationToken cancellationToken)
     {
         //var booking = await _bookingRepository.GetByIdAsync(Guid.Parse(request.BookingId));
-        
+
         var targetPostcode = Postcode.Create(request.Postcode);
 
-        var allContractors = ( _contractorRepository.Get(
-            predicate: null, 
-            false, 
-             i => i.CoverageAreas)).ToList(); // <-- Execute query here
+        // Fetch only active contractors with their coverage areas
+        var activeContractors = await _contractorRepository.GetList(
+            predicate: c => c.IsActive,
+            noTracking: true,
+            includes: i => i.CoverageAreas);
 
-        var contractors = allContractors
+        var contractors = activeContractors
             .Where(c => c.CoversPostcode(targetPostcode))
             .OrderBy(c => c.BookedCount)
             .ToList();

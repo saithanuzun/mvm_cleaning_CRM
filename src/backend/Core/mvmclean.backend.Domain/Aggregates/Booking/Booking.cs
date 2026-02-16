@@ -46,7 +46,7 @@ public class Booking : Core.BaseClasses.AggregateRoot
     private Booking(PhoneNumber number, Postcode postcode)
     {
         PhoneNumber = number;
-        Postcode = postcode ;
+        Postcode = postcode;
         CreationStatus = BookingCreationStatus.BasicInfo;
     }
 
@@ -91,11 +91,27 @@ public class Booking : Core.BaseClasses.AggregateRoot
         }
         else
         {
+            // Apply tiered discount based on number of distinct services already in cart
+            // 1st service: 0% discount (full price)
+            // 2nd service: 10% discount
+            // 3rd+ services: 20% discount
+            int serviceCount = _serviceItems.Count;
+            decimal discountRate = serviceCount switch
+            {
+                0 => 0m,      // 1st service - full price
+                1 => 0.10m,   // 2nd service - 10% off
+                _ => 0.20m    // 3rd+ services - 20% off
+            };
+
+            var discountedPrice = unitAdjustedPrice * (1m - discountRate);
+
             var bookingItem = new BookingItem
             {
                 ServiceName = name,
                 ServiceId = serviceItemId,
-                UnitAdjustedPrice = unitAdjustedPrice,
+                UnitAdjustedPrice = discountedPrice,
+                OriginalPrice = unitAdjustedPrice,
+                DiscountRate = discountRate,
                 Quantity = quantity,
             };
             _serviceItems.Add(bookingItem);
@@ -206,7 +222,7 @@ public class Booking : Core.BaseClasses.AggregateRoot
         Status = BookingStatus.Confirmed;
         UpdatedAt = DateTime.UtcNow;
 
-        AddDomainEvent(new BookingConfirmedEvent(Id, ContractorId, TotalPrice,ScheduledSlot, ServiceItems, Customer.FullName,ServiceAddress));
+        AddDomainEvent(new BookingConfirmedEvent(Id, ContractorId, TotalPrice, ScheduledSlot, ServiceItems, Customer.FullName, ServiceAddress));
     }
 
     public void Start()

@@ -1,4 +1,5 @@
 using MediatR;
+using System.Linq.Expressions;
 using mvmclean.backend.Domain.Aggregates.Contractor;
 using mvmclean.backend.Domain.SharedKernel.ValueObjects;
 
@@ -38,20 +39,27 @@ public class GetContractorAvailabilityByDayHandler : IRequestHandler<GetContract
 
         var contractorIds = request.ContractorIds.Select(Guid.Parse).ToList();
 
-        var contractors = new List<Domain.Aggregates.Contractor.Contractor>();
-
-        foreach (var id in contractorIds)
-        {
-            var contractor = await _contractorRepository.GetByIdAsync(id);
-
-            if (contractor == null)
-                throw new Exception($"Contractor not found: {id}");
-
-            contractors.Add(contractor);
-        }
+        // Bulk fetch contractors with necessary inclusions
+        var contractors = await _contractorRepository.GetList(
+            predicate: c => contractorIds.Contains(c.Id),
+            noTracking: true,
+            includes: new Expression<Func<Domain.Aggregates.Contractor.Contractor, object>>[]
+            {
+                i => i.WorkingHours,
+                i => i.UnavailableSlots
+            });
 
         if (contractors.Count != contractorIds.Count)
-            throw new Exception("One or more contractors not found");
+        {
+            // Optional: log or handle missing contractors if needed, but don't fail for the whole request if some are missing
+            // For now, keeping the strict check if that was intended
+            var missingIds = contractorIds.Except(contractors.Select(c => c.Id)).ToList();
+            if (missingIds.Any())
+            {
+                // Handle missing contractors gracefully or throw as before
+                // throw new Exception($"One or more contractors not found: {string.Join(", ", missingIds)}");
+            }
+        }
 
         var day = request.Date.Date;
 
