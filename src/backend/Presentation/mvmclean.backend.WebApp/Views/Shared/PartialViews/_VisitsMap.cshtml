@@ -3,18 +3,21 @@
 <div class="container-fluid pt-5 pb-3">
     <div class="container">
         <div class="row align-items-center">
-            
+
             <!-- LEFT SIDE -->
             <div class="col-lg-5 col-md-12 mb-4">
                 <h6 class="text-secondary text-uppercase font-weight-medium mb-3">Our Coverage</h6>
                 <h2 class="display-4 mb-4">Professional Cleaning Across UK</h2>
                 <p class="mb-3">
-                    At <strong>MVM Cleaning</strong>, we proudly serve homes and businesses throughout Leicestershire. 
-                    <strong>Carpet cleaning</strong>, <strong>sofa cleaning</strong>, and <strong>jet washing</strong> are just some of the services we provide, ensuring every space looks and feels fresh.
+                    At <strong>MVM Cleaning</strong>, we proudly serve homes and businesses throughout Leicestershire.
+                    <strong>Carpet cleaning</strong>, <strong>sofa cleaning</strong>, and <strong>jet washing</strong>
+                    are just some of the services we provide, ensuring every space looks and feels fresh.
                 </p>
                 <p class="mb-4">
-                    The map on the right shows our service coverage with <strong>example visit markers</strong> highlighting the areas we frequently attend in Leicester and surrounding communities.
-                    Whether you need a deep clean for your home or commercial space, our team is ready to deliver reliable, high-quality results.
+                    The map on the right shows our service coverage with <strong>example visit markers</strong>
+                    highlighting the areas we frequently attend in Leicester and surrounding communities.
+                    Whether you need a deep clean for your home or commercial space, our team is ready to deliver
+                    reliable, high-quality results.
                 </p>
                 <a href="/get-a-quote" class="btn btn-primary py-2 px-4">Book a Cleaning</a>
             </div>
@@ -22,7 +25,8 @@
 
             <!-- RIGHT SIDE MAP -->
             <div class="col-lg-7 col-md-12">
-                <div id="visitsMap" style="width:100%; height:450px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+                <div id="visitsMap" style="width:100%; height:450px; border-radius: 8px; border: 1px solid #dee2e6;">
+                </div>
                 <div class="mt-2 text-center text-muted small">
                     <i class="bi bi-info-circle"></i> Click on markers to see booking details
                 </div>
@@ -50,7 +54,7 @@
     let currentLayer;
     let markersCluster;
     let isMarkersVisible = true;
-    
+
     // Tile layer options
     const tileLayers = {
         light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -58,8 +62,8 @@
             maxZoom: 20,
             subdomains: 'abcd'
         }),
-        
-        
+
+
     };
 
     // Define the cleaning icon using your carIcon.png
@@ -77,7 +81,7 @@
     function initMap() {
         // Center on Leicestershire
         const center = [52.6369, -1.1398];
-        
+
         // Initialize map
         map = L.map('visitsMap', {
             center: center,
@@ -105,10 +109,10 @@
 
         // Add scale control
         L.control.scale({ imperial: false }).addTo(map);
-        
+
         // Load markers
         loadBookingsMarkers();
-        
+
         // Set up event listeners for controls
         setupEventListeners();
     }
@@ -244,29 +248,29 @@
         // Toggle map theme
         const toggleBtn = document.getElementById('toggleMapStyle');
         if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
+            toggleBtn.addEventListener('click', function () {
                 const isLight = currentLayer === tileLayers.light;
-                
+
                 // Remove current layer
                 map.removeLayer(currentLayer);
-                
+
                 // Add new layer
                 currentLayer = isLight ? tileLayers.dark : tileLayers.light;
                 currentLayer.addTo(map);
-                
+
                 // Update button text and icon
                 const iconClass = isLight ? 'bi-moon' : 'bi-sun';
                 const text = isLight ? 'Switch to Light Theme' : 'Switch to Dark Theme';
                 this.innerHTML = `<i class="bi ${iconClass}"></i> ${text}`;
             });
         }
-        
+
         // Toggle markers visibility
         const toggleMarkersBtn = document.getElementById('toggleMarkers');
         if (toggleMarkersBtn) {
-            toggleMarkersBtn.addEventListener('click', function() {
+            toggleMarkersBtn.addEventListener('click', function () {
                 isMarkersVisible = !isMarkersVisible;
-                
+
                 if (isMarkersVisible) {
                     map.addLayer(markersCluster);
                     this.innerHTML = '<i class="bi bi-eye-slash"></i> Hide Markers';
@@ -276,11 +280,11 @@
                 }
             });
         }
-        
+
         // Reset view
         const resetViewBtn = document.getElementById('resetView');
         if (resetViewBtn) {
-            resetViewBtn.addEventListener('click', function() {
+            resetViewBtn.addEventListener('click', function () {
                 if (markersCluster.getBounds().isValid()) {
                     map.fitBounds(markersCluster.getBounds().pad(0.15));
                 } else {
@@ -288,9 +292,9 @@
                 }
             });
         }
-        
+
         // Handle window resize
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', function () {
             map.invalidateSize();
         });
     }
@@ -313,62 +317,64 @@
         min-height: 450px;
         transition: all 0.3s ease;
     }
-    
+
     #visitsMap:hover {
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
-    
-    
+
+
     .marker-cluster-small div {
         background-color: rgba(25, 67, 118);
         color: white;
         font-weight: bold;
     }
-    
-    
+
+
     .marker-cluster-medium div {
         background-color: rgba(70, 198, 206);
         color: white;
         font-weight: bold;
     }
-    
-    
+
+
     .marker-cluster-large div {
         background-color: rgba(255, 194, 91);
         color: #212529;
         font-weight: bold;
     }
-    
-    
+
+
     @@keyframes pulse {
         0% {
             transform: scale(1);
             box-shadow: 0 0 0 0 rgba(25, 67, 118);
         }
+
         70% {
             transform: scale(1.05);
             box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
         }
+
         100% {
             transform: scale(1);
             box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
         }
     }
-    
+
     /* Control buttons */
     .btn-group .btn {
         border-radius: 4px !important;
         margin-right: 5px;
         margin-bottom: 5px;
     }
-    
+
     /* Responsive adjustments */
     @@media (max-width: 768px) {
         #visitsMap {
             height: 350px;
         }
-        
-        
+
+
         .btn-group .btn {
             flex: 1;
             min-width: 120px;

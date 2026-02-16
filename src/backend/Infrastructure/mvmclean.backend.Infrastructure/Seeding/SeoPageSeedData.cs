@@ -27,7 +27,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -44,7 +44,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -61,7 +61,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -78,7 +78,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -95,7 +95,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -112,7 +112,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -128,7 +128,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -144,7 +144,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -162,7 +162,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -178,7 +178,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -194,7 +194,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -210,7 +210,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -226,7 +226,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -242,7 +242,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -258,7 +258,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -274,7 +274,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -287,7 +287,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -299,7 +299,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -311,7 +311,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -323,7 +323,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -340,7 +340,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -352,7 +352,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             },
@@ -364,7 +364,7 @@ public static class SeoPageSeedData
                     Services = new[]
                     {
                         "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
-                        "Jet Washing", "Pressure Washing"
+                        "Rug Cleaning"
                     }
                 }
             }

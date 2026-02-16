@@ -24,7 +24,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructureRegistration(this IServiceCollection serviceCollection)
     {
         var configuration = serviceCollection.BuildServiceProvider().GetRequiredService<IConfiguration>();
-        
+
         var resend = configuration["RESEND:RESEND_APITOKEN"];
         var connStr = configuration.GetConnectionString("MyDbConnection");
 
@@ -47,19 +47,19 @@ public static class DependencyInjection
         // Register infrastructure services
         serviceCollection.AddScoped<IStripeService, StripeService>();
         serviceCollection.AddScoped<IInvoiceService, Services.InvoiceService>();
-        
+
         // Register Resend email provider
         serviceCollection.Configure<ResendClientOptions>(options =>
         {
             options.ApiToken = resend;
-            
+
             if (string.IsNullOrEmpty(options.ApiToken))
             {
                 throw new InvalidOperationException(
                     "RESEND:RESEND_APITOKEN is not configured. Please set it in appsettings or environment variables.");
             }
         });
-        
+
         // Register ResendClient as factory with HttpClient
         serviceCollection.AddScoped<ResendClient>(provider =>
         {
@@ -67,17 +67,20 @@ public static class DependencyInjection
             var httpClient = new HttpClient();
             return new ResendClient(options, httpClient);
         });
-        
+
         // Register IResend
-        serviceCollection.AddScoped<IResend>(provider => 
+        serviceCollection.AddScoped<IResend>(provider =>
             provider.GetRequiredService<ResendClient>());
-        
+
         // Register mailing service (depends on IResend)
         serviceCollection.AddScoped<IMailingService, Services.MailingService>();
 
+        // Register SMS service
+        serviceCollection.AddScoped<ISmsService, SmsService>();
+
         // Register database seeder
         serviceCollection.AddScoped<DatabaseSeeder>();
-        
+
 
 
 

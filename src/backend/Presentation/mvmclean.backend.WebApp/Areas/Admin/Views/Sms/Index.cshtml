@@ -1,0 +1,242 @@
+@model mvmclean.backend.Application.Features.Sms.Queries.GetAllPhoneNumbersResponse
+@{
+    ViewBag.Title = "SMS Management";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">
+                <i class="bi bi-chat-text"></i> SMS Management
+            </h2>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle"></i> @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle"></i> @TempData["Warning"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Phone Numbers List (Left Sidebar) -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-telephone"></i> Phone Numbers
+                        <span class="badge bg-secondary float-end">@Model.TotalCount</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="p-3 bg-light border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-database"></i> Database: @Model.FromDatabase |
+                                <i class="bi bi-file-text"></i> File: @Model.FromTextFile
+                            </small>
+                        </div>
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">
+                                <i class="bi bi-check-all"></i> Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">
+                                <i class="bi bi-x-circle"></i> Deselect All
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-info" id="selectedCount">0 selected</span>
+                        </div>
+                    </div>
+
+                    <div class="phone-list" style="max-height: 600px; overflow-y: auto;">
+                        @if (Model.PhoneNumbers != null && Model.PhoneNumbers.Any())
+                        {
+                            @foreach (var phoneNumber in Model.PhoneNumbers)
+                            {
+                                <div class="form-check p-3 border-bottom phone-item">
+                                    <input class="form-check-input phone-checkbox" type="checkbox" name="phoneNumbers"
+                                        value="@phoneNumber" id="phone_@phoneNumber.GetHashCode()">
+                                    <label class="form-check-label w-100" for="phone_@phoneNumber.GetHashCode()">
+                                        <i class="bi bi-phone"></i> @phoneNumber
+                                    </label>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-3 text-center text-muted">
+                                <i class="bi bi-inbox"></i>
+                                <p>No phone numbers found</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMS Compose Area (Right Side) -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-envelope"></i> Compose SMS
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="SendBulkSms" method="post" id="smsForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="message" class="form-label">
+                                <i class="bi bi-chat-left-text"></i> Message
+                            </label>
+                            <textarea class="form-control" id="message" name="message" rows="8"
+                                placeholder="Enter your SMS message here..." required></textarea>
+                            <div class="form-text">
+                                <span id="charCount">0</span> characters
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> This is a placeholder implementation.
+                            SMS messages will be logged but not actually sent until you integrate an SMS provider
+                            (e.g., Twilio, AWS SNS).
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="sendBtn" disabled>
+                                <i class="bi bi-send"></i> Send SMS to Selected Numbers
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-eye"></i> Preview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-light mb-0">
+                        <strong>Recipients:</strong> <span id="recipientPreview">None selected</span><br>
+                        <strong>Message:</strong> <span id="messagePreview" class="text-muted">No message</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        // Update character count
+        document.getElementById('message').addEventListener('input', function () {
+            const charCount = this.value.length;
+            document.getElementById('charCount').textContent = charCount;
+            document.getElementById('messagePreview').textContent = this.value || 'No message';
+            updateSendButton();
+        });
+
+        // Update selected count and enable/disable send button
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.phone-checkbox:checked');
+            const count = checkboxes.length;
+            document.getElementById('selectedCount').textContent = count + ' selected';
+
+            // Update recipient preview
+            if (count > 0) {
+                const numbers = Array.from(checkboxes).map(cb => cb.value);
+                const preview = count <= 5
+                    ? numbers.join(', ')
+                    : numbers.slice(0, 5).join(', ') + ` ... and ${count - 5} more`;
+                document.getElementById('recipientPreview').textContent = preview;
+            } else {
+                document.getElementById('recipientPreview').textContent = 'None selected';
+            }
+
+            updateSendButton();
+        }
+
+        // Enable/disable send button based on selections and message
+        function updateSendButton() {
+            const hasSelection = document.querySelectorAll('.phone-checkbox:checked').length > 0;
+            const hasMessage = document.getElementById('message').value.trim().length > 0;
+            document.getElementById('sendBtn').disabled = !(hasSelection && hasMessage);
+        }
+
+        // Select all checkboxes
+        function selectAll() {
+            document.querySelectorAll('.phone-checkbox').forEach(cb => cb.checked = true);
+            updateSelectedCount();
+        }
+
+        // Deselect all checkboxes
+        function deselectAll() {
+            document.querySelectorAll('.phone-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        }
+
+        // Add event listeners to all checkboxes
+        document.querySelectorAll('.phone-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+
+        // Confirm before sending
+        document.getElementById('smsForm').addEventListener('submit', function (e) {
+            const count = document.querySelectorAll('.phone-checkbox:checked').length;
+            if (!confirm(`Are you sure you want to send SMS to ${count} phone number(s)?`)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+
+    <style>
+        .phone-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .phone-list {
+            scrollbar-width: thin;
+        }
+
+        .phone-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .phone-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .phone-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .phone-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+}

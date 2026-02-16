@@ -1,7 +1,7 @@
 Id,Address,Latitude,Longitude,Date,ServiceType,Rating
 1001,"12 High Street, Leicester",52.6369,-1.1398,2025-06-05,Carpet Cleaning,★★★★★
 1002,"45 Church Road, Oadby",52.6075,-1.0895,2025-06-03,Sofa Cleaning,★★★★★
-1003,"8 Station Road, Loughborough",52.7719,-1.2051,2025-06-02,Jet Washing,★★★★★
+1003,"8 Station Road, Loughborough",52.7719,-1.2051,2025-06-02,Carpet Cleaning,★★★★★
 1004,"1 Mill Farm Lane Ashby de la Zouch LE65 1GR",52.7464,-1.4735,2025-12-15,Carpet Cleaning,★★★★★
 1005,"Flat 41 Dover House Leicester LE1 6PL",52.6337,-1.1278,2025-12-13,Carpet Cleaning,★★★★★
 1006,"8 Pembrey Road, Leicester",52.6369,-1.1398,2025-12-12,Carpet Cleaning,★★★★★
@@ -39,22 +39,22 @@ Id,Address,Latitude,Longitude,Date,ServiceType,Rating
 1056,"24 Rollings Drive, Coventry CV2 3QN",52.4292,-1.4667,2025-04-08,Carpet Cleaning,★★★★★
 1057,"7 Juno Close, Glenfield, Leicester LE3 8SX",52.6564,-1.1989,2025-03-31,Carpet Cleaning,★★★★★
 1058,"32 London Road, Leicester LE2 0PE",52.6263,-1.1238,2025-03-15,Carpet Cleaning,★★★★★
-1059,"18 High Street, Loughborough LE11 2QA",52.7714,-1.2067,2025-03-10,Jet Washing,★★★★★
+1059,"18 High Street, Loughborough LE11 2QA",52.7714,-1.2067,2025-03-10,Carpet Cleaning,★★★★★
 1060,"42 Market Street, Ashby-de-la-Zouch LE65 1AH",52.7473,-1.4726,2025-03-05,Sofa Cleaning,★★★★★
 1061,"7 Queens Road, Hinckley LE10 1QT",52.5412,-1.3743,2025-02-28,Carpet Cleaning,★★★★★
 1062,"15 Station Road, Melton Mowbray LE13 1QJ",52.7663,-0.8864,2025-02-25,Sofa Cleaning,★★★★★
 1063,"23 Belvoir Road, Coalville LE67 3PD",52.7205,-1.3702,2025-02-20,Carpet Cleaning,★★★★★
-1064,"9 Main Street, Wigston LE18 1PA",52.5812,-1.1072,2025-02-15,Jet Washing,★★★★★
+1064,"9 Main Street, Wigston LE18 1PA",52.5812,-1.1072,2025-02-15,Carpet Cleaning,★★★★★
 1065,"36 Uppingham Road, Leicester LE5 0QD",52.6378,-1.1029,2025-02-10,Sofa Cleaning,★★★★★
 1066,"14 Narborough Road South, Leicester LE3 2PT",52.6173,-1.1635,2025-02-05,Carpet Cleaning,★★★★★
 1067,"5 Church Gate, Leicester LE1 4AJ",52.6345,-1.1332,2025-01-30,Sofa Cleaning,★★★★★
 1068,"27 Granby Street, Leicester LE1 6EH",52.6328,-1.1304,2025-01-25,Carpet Cleaning,★★★★★
-1069,"12 Stoneygate Road, Leicester LE2 2AB",52.6187,-1.1128,2025-01-20,Jet Washing,★★★★★
+1069,"12 Stoneygate Road, Leicester LE2 2AB",52.6187,-1.1128,2025-01-20,Carpet Cleaning,★★★★★
 1070,"8 Fosse Road North, Leicester LE3 5BE",52.6412,-1.1598,2025-01-15,Sofa Cleaning,★★★★★
 1071,"19 Aylestone Road, Leicester LE2 7LL",52.6198,-1.1432,2025-01-10,Carpet Cleaning,★★★★★
 1072,"33 Humberstone Road, Leicester LE5 0EG",52.6423,-1.1067,2025-01-05,Sofa Cleaning,★★★★★
 1073,"41 Evington Road, Leicester LE2 1QG",52.6289,-1.1167,2025-01-02,Carpet Cleaning,★★★★★
-1074,"22 Welford Road, Leicester LE2 7AD",52.6256,-1.1267,2024-12-28,Jet Washing,★★★★★
+1074,"22 Welford Road, Leicester LE2 7AD",52.6256,-1.1267,2024-12-28,Carpet Cleaning,★★★★★
 1075,"16 New Walk, Leicester LE1 6TF",52.6289,-1.1285,2024-12-25,Sofa Cleaning,★★★★★
 1076,"29 London Road, Stoneygate LE2 1ND",52.6217,-1.1223,2024-12-20,Carpet Cleaning,★★★★★
 1077,"37 Knighton Lane, Leicester LE2 3HB",52.6105,-1.1167,2024-12-15,Sofa Cleaning,★★★★★
