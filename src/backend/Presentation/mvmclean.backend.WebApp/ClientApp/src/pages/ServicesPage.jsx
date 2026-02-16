@@ -23,9 +23,9 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
             try {
                 setLoading(true);
                 setError('');
-                
+
                 const response = await api.services.getByPostcode(bookingData.postcode);
-                
+
                 if (response && response.success && response.data && Array.isArray(response.data)) {
                     // Map API response to service object structure
                     const mappedServices = response.data.map(service => ({
@@ -36,50 +36,50 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                         duration: service.estimatedDurationMinutes,
                         category: service.category.toLowerCase().replace(/\s+/g, '-')
                     }));
-                    
+
                     setServices(mappedServices);
 
                     // Extract unique categories from services and sort in desired order
                     const uniqueCategories = [...new Set(mappedServices.map(s => s.category))];
-                    
+
                     // Define priority order for categories (start with these)
                     const startPriority = [
                         'carpet-cleaning',
                         'upholstery-cleaning',
                         'cleaning-packages',
                     ];
-                    
+
                     // Define categories that should be at the end
                     const endPriority = [
                         'additional-services',
                         'all-services',
                     ];
-                    
+
                     // Sort categories: priority first, then middle categories, then end categories
                     const sortedCategories = uniqueCategories.sort((a, b) => {
                         const startIndexA = startPriority.indexOf(a);
                         const startIndexB = startPriority.indexOf(b);
                         const endIndexA = endPriority.indexOf(a);
                         const endIndexB = endPriority.indexOf(b);
-                        
+
                         // Both in start priority
                         if (startIndexA !== -1 && startIndexB !== -1) return startIndexA - startIndexB;
                         // Only a is in start priority
                         if (startIndexA !== -1) return -1;
                         // Only b is in start priority
                         if (startIndexB !== -1) return 1;
-                        
+
                         // Both in end priority
                         if (endIndexA !== -1 && endIndexB !== -1) return endIndexA - endIndexB;
                         // Only a is in end priority
                         if (endIndexA !== -1) return 1;
                         // Only b is in end priority
                         if (endIndexB !== -1) return -1;
-                        
+
                         // Both are middle categories - sort alphabetically
                         return a.localeCompare(b);
                     });
-                    
+
                     const categoryList = [
                         { id: 'all', name: 'All Services', color: '#46C6CE' },
                         ...sortedCategories.map(cat => ({
@@ -174,12 +174,25 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
         handleQuantityChange(serviceId, 1);
     };
 
+
     const calculateTotal = () => {
-        return Object.entries(selectedServices).reduce((total, [serviceId, quantity]) => {
-            const service = services.find(s => s.id === serviceId);
-            console.log('Calculating total:', { serviceId, service, quantity, price: service?.price });
-            return total + (service?.price || 0) * quantity;
-        }, 0);
+        // Get array of selected services with their quantities
+        const selectedServicesList = Object.entries(selectedServices)
+            .map(([serviceId, quantity]) => {
+                const service = services.find(s => s.id === serviceId);
+                return service ? { ...service, quantity } : null;
+            })
+            .filter(s => s !== null);
+
+        // Apply tiered discount: 1st service full price, 2nd service 10% off, 3rd+ 20% off
+        let total = 0;
+        selectedServicesList.forEach((service, index) => {
+            const discountRate = index === 0 ? 0 : index === 1 ? 0.10 : 0.20;
+            const discountedPrice = service.price * (1 - discountRate);
+            total += discountedPrice * service.quantity;
+        });
+
+        return total;
     };
 
     const calculateTotalDuration = () => {
@@ -195,20 +208,20 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
 
     const getFilteredServices = () => {
         const filtered = activeCategory === 'all' ? services : services.filter(service => service.category === activeCategory);
-        
+
         // Define priority order for categories (start with these)
         const startPriority = [
             'carpet-cleaning',
             'upholstery-cleaning',
             'cleaning-packages',
         ];
-        
+
         // Define categories that should be at the end
         const endPriority = [
             'additional-services',
             'all-services',
         ];
-        
+
         // Sort services by category order (if 'all'), then by price within category
         return filtered.sort((a, b) => {
             if (activeCategory === 'all') {
@@ -217,7 +230,7 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                 const startIndexB = startPriority.indexOf(b.category);
                 const endIndexA = endPriority.indexOf(a.category);
                 const endIndexB = endPriority.indexOf(b.category);
-                
+
                 // Compare categories first
                 // Both in start priority
                 if (startIndexA !== -1 && startIndexB !== -1) {
@@ -227,7 +240,7 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                 else if (startIndexA !== -1) return -1;
                 // Only b is in start priority
                 else if (startIndexB !== -1) return 1;
-                
+
                 // Both in end priority
                 if (endIndexA !== -1 && endIndexB !== -1) {
                     if (endIndexA !== endIndexB) return endIndexA - endIndexB;
@@ -236,11 +249,11 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                 else if (endIndexA !== -1) return 1;
                 // Only b is in end priority
                 else if (endIndexB !== -1) return -1;
-                
+
                 // Middle categories - sort alphabetically
                 if (a.category !== b.category) return a.category.localeCompare(b.category);
             }
-            
+
             // Within same category, sort by price (low to high)
             return a.price - b.price;
         });
@@ -285,7 +298,7 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 py-8 px-4">
             <div className="max-w-7xl mx-auto">
-      
+
 
                 {/* Error Message */}
                 {error && (
@@ -299,6 +312,27 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                     </div>
                 )}
 
+                {/* Discount Promotion Banner */}
+                <div className="max-w-4xl mx-auto mb-6">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 shadow-md">
+                        <div className="flex items-center justify-center gap-3">
+                            <div className="bg-green-500 rounded-full p-2">
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-green-800 font-bold text-lg">
+                                    🎉 Multi-Service Discount!
+                                </p>
+                                <p className="text-green-700 text-sm mt-1">
+                                    2nd service <span className="font-bold">10% OFF</span> • 3rd+ services <span className="font-bold">20% OFF</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Category Filter */}
                 <div className="flex flex-wrap gap-3 justify-center mb-8">
                     {categories.map(category => (
@@ -308,9 +342,9 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                             className={`
                                 flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-300
                                 ${activeCategory === category.id
-                                ? 'shadow-md transform scale-105'
-                                : 'hover:shadow-sm hover:-translate-y-0.5'
-                            }
+                                    ? 'shadow-md transform scale-105'
+                                    : 'hover:shadow-sm hover:-translate-y-0.5'
+                                }
                             `}
                             style={{
                                 backgroundColor: activeCategory === category.id ? category.color : 'white',
@@ -336,9 +370,9 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                                 className={`
                                     relative bg-white rounded-xl border p-4 transition-all duration-300 h-full
                                     ${isSelected
-                                    ? 'border-[#194376] shadow-lg transform scale-102'
-                                    : 'border-gray-200 hover:border-[#46C6CE]/50 hover:shadow-md'
-                                }
+                                        ? 'border-[#194376] shadow-lg transform scale-102'
+                                        : 'border-gray-200 hover:border-[#46C6CE]/50 hover:shadow-md'
+                                    }
                                 `}
                             >
                                 {/* Popular Badge */}
@@ -384,8 +418,33 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                                             <span>{service.duration} min</span>
                                         </div>
                                         <div className="text-right">
-                                            <div className="font-bold text-gray-800">£{service.price.toFixed(2)}</div>
-                                            <div className="text-xs text-gray-500">per service</div>
+                                            {(() => {
+                                                // Calculate what position this service would be if added
+                                                const currentServiceCount = Object.keys(selectedServices).length;
+                                                const wouldBePosition = isSelected ? -1 : currentServiceCount; // -1 means already selected
+                                                const discountRate = wouldBePosition === 0 ? 0 : wouldBePosition === 1 ? 0.10 : wouldBePosition >= 2 ? 0.20 : 0;
+                                                const discountedPrice = service.price * (1 - discountRate);
+                                                const hasDiscount = discountRate > 0 && !isSelected;
+
+                                                return (
+                                                    <>
+                                                        {hasDiscount ? (
+                                                            <div>
+                                                                <div className="text-xs text-gray-400 line-through">£{service.price.toFixed(2)}</div>
+                                                                <div className="font-bold text-green-600">£{discountedPrice.toFixed(2)}</div>
+                                                                <div className="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-bold inline-block">
+                                                                    -{(discountRate * 100).toFixed(0)}% off
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <div className="font-bold text-gray-800">£{service.price.toFixed(2)}</div>
+                                                                <div className="text-xs text-gray-500">per service</div>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 
@@ -506,27 +565,48 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                                 <div className="flex flex-wrap gap-2">
                                     {services
                                         .filter(s => selectedServices[s.id])
-                                        .map(service => (
-                                            <div
-                                                key={service.id}
-                                                className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2"
-                                            >
-                                                <span className="font-medium text-sm text-gray-800">{service.name}</span>
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-xs bg-white px-1.5 py-0.5 rounded font-bold">
-                                                        {selectedServices[service.id]}×
-                                                    </span>
-                                                    <span className="text-sm text-gray-600">£{(service.price * selectedServices[service.id]).toFixed(2)}</span>
+                                        .map((service, index) => {
+                                            const discountRate = index === 0 ? 0 : index === 1 ? 0.10 : 0.20;
+                                            const originalPrice = service.price * selectedServices[service.id];
+                                            const discountedPrice = originalPrice * (1 - discountRate);
+                                            const hasDiscount = discountRate > 0;
+
+                                            return (
+                                                <div
+                                                    key={service.id}
+                                                    className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2"
+                                                >
+                                                    <span className="font-medium text-sm text-gray-800">{service.name}</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-xs bg-white px-1.5 py-0.5 rounded font-bold">
+                                                            {selectedServices[service.id]}×
+                                                        </span>
+                                                        {hasDiscount ? (
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="text-xs text-gray-400 line-through">
+                                                                    £{originalPrice.toFixed(2)}
+                                                                </span>
+                                                                <span className="text-sm text-green-600 font-bold">
+                                                                    £{discountedPrice.toFixed(2)}
+                                                                </span>
+                                                                <span className="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-bold">
+                                                                    -{(discountRate * 100).toFixed(0)}%
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-sm text-gray-600">£{originalPrice.toFixed(2)}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     }
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
-                
+
             </div>
         </div>
     );

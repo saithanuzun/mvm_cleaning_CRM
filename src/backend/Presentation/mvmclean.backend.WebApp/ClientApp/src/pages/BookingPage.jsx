@@ -46,10 +46,30 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
         return null;
     };
 
+    // Calculate multi-service discount savings
+    const calculateMultiServiceDiscount = () => {
+        const services = bookingData.selectedServicesData || bookingData.basket?.items || [];
+        if (services.length === 0) return 0;
+
+        let originalTotal = 0;
+        let discountedTotal = 0;
+
+        services.forEach((item, index) => {
+            const discountRate = index === 0 ? 0 : index === 1 ? 0.10 : 0.20;
+            const originalPrice = item.price || 0;
+            const discountedPrice = originalPrice * (1 - discountRate);
+
+            originalTotal += originalPrice * item.quantity;
+            discountedTotal += discountedPrice * item.quantity;
+        });
+
+        return originalTotal - discountedTotal;
+    };
+
     const handleApplyPromo = async () => {
         setPromoError('');
         setPromoDiscount(0);
-        
+
         if (!promoCode.trim()) {
             setPromoError('Please enter a promo code');
             return;
@@ -63,7 +83,7 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
         try {
             // Call the API to apply promotion
             const response = await api.booking.applyPromotion(bookingData.bookingId, promoCode.toUpperCase());
-            
+
             if (!response.success) {
                 setPromoError(response.message || 'Invalid promo code');
                 setPromoApplied(false);
@@ -162,7 +182,7 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
                     paymentMethod: paymentMethod
                 }));
 
-                
+
 
                 // Update booking data
                 updateBookingData({
@@ -263,15 +283,34 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
                             <p className="text-xs text-gray-500 mb-3 font-semibold uppercase tracking-wide">Services Selected</p>
                             <div className="space-y-2">
                                 {(bookingData.selectedServicesData || bookingData.basket?.items) && (bookingData.selectedServicesData || bookingData.basket?.items).length > 0 ? (
-                                    (bookingData.selectedServicesData || bookingData.basket.items).map((item, index) => (
-                                        <div key={index} className="flex justify-between items-center p-2 bg-white rounded">
-                                            <div>
-                                                <p className="font-semibold text-gray-800 text-sm">{item.name || item.serviceName}</p>
-                                                <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                                    (bookingData.selectedServicesData || bookingData.basket.items).map((item, index) => {
+                                        const discountRate = index === 0 ? 0 : index === 1 ? 0.10 : 0.20;
+                                        const originalPrice = (item.price || 0) * item.quantity;
+                                        const discountedPrice = originalPrice * (1 - discountRate);
+                                        const hasDiscount = discountRate > 0;
+
+                                        return (
+                                            <div key={index} className="flex justify-between items-center p-2 bg-white rounded">
+                                                <div>
+                                                    <p className="font-semibold text-gray-800 text-sm">{item.name || item.serviceName}</p>
+                                                    <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    {hasDiscount ? (
+                                                        <div>
+                                                            <p className="text-xs text-gray-400 line-through">£{originalPrice.toFixed(2)}</p>
+                                                            <p className="font-bold text-green-600">£{discountedPrice.toFixed(2)}</p>
+                                                            <span className="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-bold">
+                                                                -{(discountRate * 100).toFixed(0)}% off
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="font-bold text-gray-800">£{originalPrice.toFixed(2)}</p>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <p className="font-bold text-gray-800">£{((item.price || item.serviceName) * item.quantity).toFixed(2)}</p>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
                                     <p className="text-sm text-gray-600">No services selected</p>
                                 )}
@@ -304,13 +343,18 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
                                     <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Total</p>
                                     <div>
                                         <p className="font-bold text-2xl" style={{ color: '#194376' }}>
-                                            £{(bookingData.totalAmount && promoDiscount > 0 
+                                            £{(bookingData.totalAmount && promoDiscount > 0
                                                 ? (bookingData.totalAmount - promoDiscount).toFixed(2)
                                                 : bookingData.totalAmount?.toFixed(2)) || '0.00'}
                                         </p>
+                                        {calculateMultiServiceDiscount() > 0 && (
+                                            <p className="text-xs text-green-600 font-semibold">
+                                                Multi-service discount: £{calculateMultiServiceDiscount().toFixed(2)}
+                                            </p>
+                                        )}
                                         {promoDiscount > 0 && (
                                             <p className="text-xs text-green-600 font-semibold">
-                                                Saving: £{promoDiscount.toFixed(2)}
+                                                Promo code saving: £{promoDiscount.toFixed(2)}
                                             </p>
                                         )}
                                     </div>
@@ -424,180 +468,180 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
                         </div>
                     </div>
 
-                {/* Promo Code Section */}
-                <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                        <svg className="w-6 h-6 mr-2" style={{ color: '#194376' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h6a2 2 0 012 2m0 16H7a2 2 0 01-2-2m16 0a2 2 0 01-2 2h-6a2 2 0 01-2-2m0-4V9m0 4V5m0 16h6a2 2 0 002-2V5a2 2 0 00-2-2h-6a2 2 0 00-2 2" />
-                        </svg>
-                        Promo Code
-                    </h3>
+                    {/* Promo Code Section */}
+                    <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
+                        <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <svg className="w-6 h-6 mr-2" style={{ color: '#194376' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h6a2 2 0 012 2m0 16H7a2 2 0 01-2-2m16 0a2 2 0 01-2 2h-6a2 2 0 01-2-2m0-4V9m0 4V5m0 16h6a2 2 0 002-2V5a2 2 0 00-2-2h-6a2 2 0 00-2 2" />
+                            </svg>
+                            Promo Code
+                        </h3>
 
-                    {promoApplied ? (
-                        <div className="bg-green-50 border-2 border-green-400 rounded-xl p-4 mb-4">
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-start">
-                                    <svg className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    <div>
-                                        <p className="font-bold text-green-800">Promo Code Applied!</p>
-                                        <p className="text-sm text-green-700 mt-1">
-                                            Code <span className="font-mono font-bold">{promoCode.toUpperCase()}</span> - Save £{promoDiscount.toFixed(2)}
-                                        </p>
+                        {promoApplied ? (
+                            <div className="bg-green-50 border-2 border-green-400 rounded-xl p-4 mb-4">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-start">
+                                        <svg className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-bold text-green-800">Promo Code Applied!</p>
+                                            <p className="text-sm text-green-700 mt-1">
+                                                Code <span className="font-mono font-bold">{promoCode.toUpperCase()}</span> - Save £{promoDiscount.toFixed(2)}
+                                            </p>
+                                        </div>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleRemovePromo}
+                                        className="text-green-600 hover:text-green-800 font-semibold text-sm"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex gap-3">
+                                <div className="flex-1">
+                                    <input
+                                        type="text"
+                                        value={promoCode}
+                                        onChange={(e) => {
+                                            setPromoCode(e.target.value);
+                                            setPromoError('');
+                                        }}
+                                        placeholder="Enter promo code (e.g., SAVE10)"
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#46C6CE] focus:ring-2 focus:ring-[#46C6CE]/20 outline-none transition-all uppercase"
+                                    />
+                                    {promoError && (
+                                        <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                            </svg>
+                                            {promoError}
+                                        </p>
+                                    )}
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={handleRemovePromo}
-                                    className="text-green-600 hover:text-green-800 font-semibold text-sm"
+                                    onClick={handleApplyPromo}
+                                    className="px-8 py-3 bg-[#46C6CE] text-white font-bold rounded-xl hover:bg-[#3ba4ac] transition-all flex items-center gap-2 whitespace-nowrap"
                                 >
-                                    Remove
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Apply
                                 </button>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex gap-3">
-                            <div className="flex-1">
-                                <input
-                                    type="text"
-                                    value={promoCode}
-                                    onChange={(e) => {
-                                        setPromoCode(e.target.value);
-                                        setPromoError('');
-                                    }}
-                                    placeholder="Enter promo code (e.g., SAVE10)"
-                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#46C6CE] focus:ring-2 focus:ring-[#46C6CE]/20 outline-none transition-all uppercase"
-                                />
-                                {promoError && (
-                                    <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
-                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                        </svg>
-                                        {promoError}
-                                    </p>
-                                )}
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleApplyPromo}
-                                className="px-8 py-3 bg-[#46C6CE] text-white font-bold rounded-xl hover:bg-[#3ba4ac] transition-all flex items-center gap-2 whitespace-nowrap"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Apply
-                            </button>
-                        </div>
-                    )}
+                        )}
 
-                    <p className="text-xs text-gray-500 mt-4 italic">
-                        💡 Try these codes: <span className="font-mono font-semibold">SAVE10</span> (10% off), or <span className="font-mono font-semibold">WELCOME5</span> (5% off)
-                    </p>
-                    <p className="text-xs text-amber-600 mt-2 italic font-medium">
-                        ⚠️ Promotion codes can only be applied to card payments. Cash payments will be disabled when using a promo code.
-                    </p>
-                </div>
-
-                {/* Payment Method Selection */}
-                <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                        <svg className="w-6 h-6 mr-2" style={{ color: '#194376' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18m-9-4v8m-7 0a2 2 0 01-2-2V8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5z" />
-                        </svg>
-                        Payment Method
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Cash Option */}
-                        <div
-                            onClick={() => !promoApplied && setPaymentMethod('cash')}
-                            className={`
-                                p-4 rounded-xl border-2 cursor-pointer transition-all
-                                ${promoApplied 
-                                    ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
-                                    : paymentMethod === 'cash'
-                                    ? 'border-[#194376] bg-blue-50'
-                                    : 'border-gray-300 bg-gray-50 hover:border-gray-400'
-                                }
-                            `}
-                        >
-                            <div className="flex items-start">
-                                <input
-                                    type="radio"
-                                    name="paymentMethod"
-                                    value="cash"
-                                    checked={paymentMethod === 'cash'}
-                                    onChange={(e) => !promoApplied && setPaymentMethod(e.target.value)}
-                                    disabled={promoApplied}
-                                    className="mt-1 h-5 w-5 cursor-pointer"
-                                    style={{ accentColor: '#194376' }}
-                                />
-                                <div className="ml-4 flex-1">
-                                    <h4 className="font-bold text-gray-800 text-lg">Pay on Completion</h4>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Pay in cash after the service is completed
-                                    </p>
-                                    {promoApplied && (
-                                        <p className="text-xs text-red-600 mt-2 font-semibold">
-                                            💳 Card payment required with promo codes
-                                        </p>
-                                    )}
-                                    <p className="text-xs text-gray-500 mt-2 font-semibold">
-                                        Total: £{(bookingData.totalAmount && promoDiscount > 0 
-                                            ? (bookingData.totalAmount - promoDiscount).toFixed(2)
-                                            : bookingData.totalAmount?.toFixed(2)) || '0.00'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Card Option */}
-                        <div
-                            onClick={() => setPaymentMethod('card')}
-                            className={`
-                                p-4 rounded-xl border-2 cursor-pointer transition-all
-                                ${paymentMethod === 'card'
-                                    ? 'border-[#46C6CE] bg-cyan-50'
-                                    : 'border-gray-300 bg-gray-50 hover:border-gray-400'
-                                }
-                            `}
-                        >
-                            <div className="flex items-start">
-                                <input
-                                    type="radio"
-                                    name="paymentMethod"
-                                    value="card"
-                                    checked={paymentMethod === 'card'}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                    className="mt-1 h-5 w-5 cursor-pointer"
-                                    style={{ accentColor: '#46C6CE' }}
-                                />
-                                <div className="ml-4 flex-1">
-                                    <h4 className="font-bold text-gray-800 text-lg">Pay by Card Now</h4>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Secure payment via Stripe (card, Apple Pay, Google Pay)
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-2 font-semibold">
-                                        Total: £{(bookingData.totalAmount && promoDiscount > 0 
-                                            ? (bookingData.totalAmount - promoDiscount).toFixed(2)
-                                            : bookingData.totalAmount?.toFixed(2)) || '0.00'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        <p className="text-xs text-gray-500 mt-4 italic">
+                            💡 Try these codes: <span className="font-mono font-semibold">SAVE10</span> (10% off), or <span className="font-mono font-semibold">WELCOME5</span> (5% off)
+                        </p>
+                        <p className="text-xs text-amber-600 mt-2 italic font-medium">
+                            ⚠️ Promotion codes can only be applied to card payments. Cash payments will be disabled when using a promo code.
+                        </p>
                     </div>
 
-                    {paymentMethod === 'cash' && (
-                        <div className="mt-4 p-4 rounded-lg bg-blue-50 border-l-4 border-blue-400">
-                            <p className="text-sm text-blue-800">
-                                <span className="font-semibold">Note:</span> You will pay the contractor in cash when they arrive to complete the service.
-                            </p>
-                        </div>
-                    )}
-                </div>
+                    {/* Payment Method Selection */}
+                    <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-100">
+                        <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <svg className="w-6 h-6 mr-2" style={{ color: '#194376' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18m-9-4v8m-7 0a2 2 0 01-2-2V8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5z" />
+                            </svg>
+                            Payment Method
+                        </h3>
 
-                {/* Terms and Conditions */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Cash Option */}
+                            <div
+                                onClick={() => !promoApplied && setPaymentMethod('cash')}
+                                className={`
+                                p-4 rounded-xl border-2 cursor-pointer transition-all
+                                ${promoApplied
+                                        ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                                        : paymentMethod === 'cash'
+                                            ? 'border-[#194376] bg-blue-50'
+                                            : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                                    }
+                            `}
+                            >
+                                <div className="flex items-start">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="cash"
+                                        checked={paymentMethod === 'cash'}
+                                        onChange={(e) => !promoApplied && setPaymentMethod(e.target.value)}
+                                        disabled={promoApplied}
+                                        className="mt-1 h-5 w-5 cursor-pointer"
+                                        style={{ accentColor: '#194376' }}
+                                    />
+                                    <div className="ml-4 flex-1">
+                                        <h4 className="font-bold text-gray-800 text-lg">Pay on Completion</h4>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Pay in cash after the service is completed
+                                        </p>
+                                        {promoApplied && (
+                                            <p className="text-xs text-red-600 mt-2 font-semibold">
+                                                💳 Card payment required with promo codes
+                                            </p>
+                                        )}
+                                        <p className="text-xs text-gray-500 mt-2 font-semibold">
+                                            Total: £{(bookingData.totalAmount && promoDiscount > 0
+                                                ? (bookingData.totalAmount - promoDiscount).toFixed(2)
+                                                : bookingData.totalAmount?.toFixed(2)) || '0.00'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Card Option */}
+                            <div
+                                onClick={() => setPaymentMethod('card')}
+                                className={`
+                                p-4 rounded-xl border-2 cursor-pointer transition-all
+                                ${paymentMethod === 'card'
+                                        ? 'border-[#46C6CE] bg-cyan-50'
+                                        : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                                    }
+                            `}
+                            >
+                                <div className="flex items-start">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="card"
+                                        checked={paymentMethod === 'card'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                        className="mt-1 h-5 w-5 cursor-pointer"
+                                        style={{ accentColor: '#46C6CE' }}
+                                    />
+                                    <div className="ml-4 flex-1">
+                                        <h4 className="font-bold text-gray-800 text-lg">Pay by Card Now</h4>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Secure payment via Stripe (card, Apple Pay, Google Pay)
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-2 font-semibold">
+                                            Total: £{(bookingData.totalAmount && promoDiscount > 0
+                                                ? (bookingData.totalAmount - promoDiscount).toFixed(2)
+                                                : bookingData.totalAmount?.toFixed(2)) || '0.00'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {paymentMethod === 'cash' && (
+                            <div className="mt-4 p-4 rounded-lg bg-blue-50 border-l-4 border-blue-400">
+                                <p className="text-sm text-blue-800">
+                                    <span className="font-semibold">Note:</span> You will pay the contractor in cash when they arrive to complete the service.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Terms and Conditions */}
                     <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border-2" style={{ borderColor: '#46C6CE40' }}>
                         <div className="flex items-start">
                             <input
