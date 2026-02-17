@@ -22,18 +22,18 @@
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
             @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
             @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
     }
 
     <div class="card border-0 shadow-sm">
@@ -46,94 +46,98 @@
         <div class="card-body p-0">
             @if (Model?.Any() == true)
             {
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Phone</th>
-                                <th>Customer</th>
-                                <th>Contractor</th>
-                                <th>Postcode</th>
-                                <th>Services</th>
-                                <th>Total Price</th>
-                                <th>Scheduled</th>
-                                <th>Status</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Phone</th>
+                                    <th>Customer</th>
+                                    <th>Contractor</th>
+                                    <th>Postcode</th>
+                                    <th>Services</th>
+                                    <th>Total Price</th>
+                                    <th>Scheduled</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                             @foreach (var booking in Model)
                             {
-                                <tr>
-                                    <td class="fw-semibold">@booking.PhoneNumber</td>
-                                    <td>
+                                        <tr>
+                                            <td class="fw-semibold">
+                                                <a href="https://wa.me/@(booking.PhoneNumber?.Replace(" ", "").Replace("+", "").Replace("-", "").Replace("(", "").Replace(")", ""))" target="_blank" class="text-decoration-none">
+                                                    <i class="bi bi-whatsapp text-success"></i> @booking.PhoneNumber
+                                                </a>
+                                            </td>
+                                            <td>
                                         @if (!string.IsNullOrEmpty(booking.CustomerName))
                                         {
-                                            <span>@booking.CustomerName</span>
+                                                        <span>@booking.CustomerName</span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">-</span>
+                                                        <span class="text-muted">-</span>
                                         }
-                                    </td>
-                                    <td>
+                                            </td>
+                                            <td>
                                         @if (!string.IsNullOrEmpty(booking.ContractorName))
                                         {
-                                            <span>@booking.ContractorName</span>
+                                                        <span>@booking.ContractorName</span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">Unassigned</span>
+                                                        <span class="text-muted">Unassigned</span>
                                         }
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-secondary">@booking.Postcode</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-info">@booking.ServiceItemCount</span>
-                                    </td>
-                                    <td class="fw-semibold">£@booking.TotalPrice.ToString("0.00")</td>
-                                    <td>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@booking.Postcode</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info">@booking.ServiceItemCount</span>
+                                            </td>
+                                            <td class="fw-semibold">£@booking.TotalPrice.ToString("0.00")</td>
+                                            <td>
                                         @if (booking.ScheduledDate.HasValue)
                                         {
-                                            <span>@booking.ScheduledDate?.ToString("dd/MM/yyyy HH:mm")</span>
+                                                        <span>@booking.ScheduledDate?.ToString("dd/MM/yyyy HH:mm")</span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">-</span>
+                                                        <span class="text-muted">-</span>
                                         }
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-@booking.StatusBadgeClass">@booking.Status</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <a href="/Admin/Booking/details/@booking.Id" class="btn btn-sm btn-outline-primary" title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@booking.StatusBadgeClass">@booking.Status</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <a href="/Admin/Booking/details/@booking.Id" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
                                         @if (booking.Status.ToString() != "Completed" && booking.Status.ToString() != "Cancelled")
                                         {
                                             @if (booking.Status.ToString() != "Confirmed")
                                             {
-                                                <form action="/Admin/Booking/confirm/@booking.Id" method="post" style="display:inline;">
-                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Confirm Booking">
-                                                        <i class="bi bi-check-circle"></i>
-                                                    </button>
-                                                </form>
+                                                                <form action="/Admin/Booking/confirm/@booking.Id" method="post" style="display:inline;">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Confirm Booking">
+                                                                        <i class="bi bi-check-circle"></i>
+                                                                    </button>
+                                                                </form>
                                             }
                                         }
-                                    </td>
-                                </tr>
+                                            </td>
+                                        </tr>
                             }
-                        </tbody>
-                    </table>
-                </div>
+                            </tbody>
+                        </table>
+                    </div>
             }
             else
             {
-                <div class="p-4 text-center text-muted">
-                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                    <p class="mt-2">No bookings found</p>
-                </div>
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No bookings found</p>
+                    </div>
             }
         </div>
     </div>

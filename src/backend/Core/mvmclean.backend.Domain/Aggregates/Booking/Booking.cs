@@ -16,6 +16,7 @@ public class Booking : Core.BaseClasses.AggregateRoot
 
     //second step assign contractor
     public Guid? ContractorId { get; private set; }
+    public Contractor.Contractor? Contractor { get; private set; }
 
     //third step add booking items
     private readonly List<BookingItem> _serviceItems = new();

@@ -65,7 +65,7 @@ public class BookingConfiguration : EntityConfiguration<Booking>
             .OnDelete(DeleteBehavior.SetNull);
 
         // Contractor relationship
-        builder.HasOne<Contractor>()
+        builder.HasOne(b => b.Contractor)
             .WithMany()
             .HasForeignKey(b => b.ContractorId)
             .OnDelete(DeleteBehavior.SetNull);

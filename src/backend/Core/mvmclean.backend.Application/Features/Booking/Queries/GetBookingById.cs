@@ -4,6 +4,7 @@ using mvmclean.backend.Domain.Aggregates.Booking.Entities;
 using mvmclean.backend.Domain.Aggregates.Booking.Enums;
 using mvmclean.backend.Domain.Aggregates.Booking.ValueObjects;
 using mvmclean.backend.Domain.SharedKernel.ValueObjects;
+using mvmclean.backend.Domain.Aggregates.Contractor;
 
 namespace mvmclean.backend.Application.Features.Booking.Queries;
 
@@ -20,6 +21,7 @@ public class GetBookingByIdResponse
     public string Postcode { get; set; }
 
     public Guid? ContractorId { get; set; }
+    public string ContractorName { get; set; } = string.Empty;
 
     public IReadOnlyList<ServiceItemDto> ServiceItems { get; set; } = new List<ServiceItemDto>();
 
@@ -56,7 +58,13 @@ public class GetBookingByIdHandler : IRequestHandler<GetBookingByIdRequest, GetB
         if (!Guid.TryParse(request.BookingId, out var bookingId))
             throw new ArgumentException("Invalid booking id");
 
-        var booking = await _bookingRepository.GetByIdAsync(bookingId);
+        var booking = await _bookingRepository.FirstOrDefaultAsync(
+            predicate: b => b.Id == bookingId,
+            noTracking: true,
+            b => b.Customer,
+            b => b.ServiceItems,
+            b => b.Contractor
+        );
 
         if (booking == null)
             throw new KeyNotFoundException("Booking not found");
@@ -68,6 +76,7 @@ public class GetBookingByIdHandler : IRequestHandler<GetBookingByIdRequest, GetB
             Postcode = booking.Postcode.Value,
 
             ContractorId = booking.ContractorId,
+            ContractorName = booking.Contractor?.FullName ?? string.Empty,
 
             ServiceItems = booking.ServiceItems.Select(item => new ServiceItemDto
             {
@@ -78,8 +87,8 @@ public class GetBookingByIdHandler : IRequestHandler<GetBookingByIdRequest, GetB
                 TotalPrice = item.UnitAdjustedPrice.Amount * item.Quantity
             }).ToList(),
 
-            TotalPrice = booking.TotalPrice.Amount,
-            Currency = booking.TotalPrice.Currency,
+            TotalPrice = booking.TotalPrice?.Amount ?? 0,
+            Currency = booking.TotalPrice?.Currency ?? string.Empty,
 
             ScheduledSlot = booking.ScheduledSlot,
 

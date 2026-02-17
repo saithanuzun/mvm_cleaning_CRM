@@ -27,7 +27,7 @@ public class SeoPageDto
     public bool IsPublished { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? PublishedAt { get; set; }
-    public string DisplayName => !string.IsNullOrEmpty(Area) 
+    public string DisplayName => !string.IsNullOrEmpty(Area)
         ? $"{ServiceType ?? "Services"} in {Area}, {City}"
         : $"{ServiceType ?? "Services"} in {City}";
 }
@@ -43,7 +43,14 @@ public class GetAllSeoPagesHandler : IRequestHandler<GetAllSeoPagesRequest, GetA
 
     public async Task<GetAllSeoPagesResponse> Handle(GetAllSeoPagesRequest request, CancellationToken cancellationToken)
     {
-        var pages = await _seoPageRepository.GetAll(false);
+        var pages = await _seoPageRepository.GetList(
+            predicate: p => true,
+            noTracking: true,
+            orderBy: q => q.OrderByDescending(p => p.CreatedAt),
+            p => p.Areas,
+            p => p.Services,
+            p => p.Keywords
+        );
 
         var pageDtos = pages
             .Select(p => new SeoPageDto

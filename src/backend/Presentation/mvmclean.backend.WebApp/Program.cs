@@ -71,8 +71,8 @@ app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        // Cache static assets for 1 year
-        ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000";
+        // Cache static assets for 1 year with immutable directive
+        ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
     }
 });
 

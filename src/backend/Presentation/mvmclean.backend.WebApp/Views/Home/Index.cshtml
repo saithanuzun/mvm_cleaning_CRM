@@ -58,8 +58,9 @@
     <div id="header-carousel" class="carousel carousel-mobile-full" data-ride="carousel">
         <div class="carousel-inner h-100">
             <div class="carousel-item active h-100">
-                <img class="w-100 h-100" src="img/collage2.png" alt="Professional carpet and sofa cleaning technicians from MvM Cleaning Leicester with modern equipment"
-                    loading="lazy" width="1920" height="1080">
+                <img class="w-100 h-100" src="img/collage2.png"
+                    alt="Professional carpet and sofa cleaning technicians from MvM Cleaning Leicester with modern equipment"
+                    width="1920" height="1080">
                 <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
                     <div class="p-3 text-center" style="max-width: 1000px;">
                         <h4 class="text-white text-uppercase mb-md-3">MvM Carpet &amp; Sofa Cleaning</h4>
@@ -69,7 +70,8 @@
                 </div>
             </div>
             <div class="carousel-item h-100">
-                <img class="w-100 h-100" src="img/collage3.webp" alt="Expert pressure washing and jet washing services for driveways and patios in Leicester by MvM Cleaning"
+                <img class="w-100 h-100" src="img/collage3.webp"
+                    alt="Expert pressure washing and jet washing services for driveways and patios in Leicester by MvM Cleaning"
                     loading="lazy" width="1920" height="1080">
                 <div class="carousel-caption d-flex flex-column align-items-center justify-content-center">
                     <div class="p-3 text-center" style="max-width: 1000px;">
@@ -218,32 +220,36 @@
         <div class="row g-3">
             <div class="col-lg-6">
                 <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img6.webp"
-                    alt="Before and after carpet stain removal showing dramatic cleaning results by MvM Cleaning Leicester" style="object-fit: cover; height: 200px;" width="600"
-                    height="400">
+                    alt="Before and after carpet stain removal showing dramatic cleaning results by MvM Cleaning Leicester"
+                    style="object-fit: cover; height: 200px;" width="600" height="400" loading="lazy">
 
             </div>
             <div class="col-lg-3 col-md-6">
-                <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img12.webp" alt="Professional upholstery cleaning results on sofa in Leicester home"
-                    style="object-fit: cover; height: 200px;" width="300" height="200">
+                <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img12.webp"
+                    alt="Professional upholstery cleaning results on sofa in Leicester home"
+                    style="object-fit: cover; height: 200px;" width="300" height="200" loading="lazy">
             </div>
             <div class="col-lg-3 col-md-6">
-                <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img1.webp" alt="Deep cleaned carpet showing fresh and spotless results in Leicester property"
-                    style="object-fit: cover; height: 400px;" width="300" height="400">
+                <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img1.webp"
+                    alt="Deep cleaned carpet showing fresh and spotless results in Leicester property"
+                    style="object-fit: cover; height: 400px;" width="300" height="400" loading="lazy">
 
             </div>
             <div class="col-lg-3 col-md-6">
-                <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img9.webp" alt="Professional area rug cleaning service with stain removal in Leicester"
-                    style="object-fit: cover; height: 200px;" width="300" height="200">
+                <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img9.webp"
+                    alt="Professional area rug cleaning service with stain removal in Leicester"
+                    style="object-fit: cover; height: 200px;" width="300" height="200" loading="lazy">
             </div>
             <div class="col-lg-3 col-md-6">
                 <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img120.webp"
-                    alt="Commercial carpet cleaning for offices and businesses in Leicester by MvM Cleaning" style="object-fit: cover; height: 200px;" width="300"
-                    height="200">
+                    alt="Commercial carpet cleaning for offices and businesses in Leicester by MvM Cleaning"
+                    style="object-fit: cover; height: 200px;" width="300" height="200" loading="lazy">
             </div>
             <div class="col-lg-6">
                 <img class="w-100 h-100 img-fluid rounded" src="img/gallery/img14.webp"
-                    alt="Eco-friendly professional carpet cleaning products used by MvM Cleaning Leicester" style="object-fit: cover; height: 400px;" width="600"
-                    height="400">
+                    alt="Eco-friendly professional carpet cleaning products used by MvM Cleaning Leicester"
+                    style="object-fit: cover; height: 400px;" width="600" height="400" loading="lazy">
+                style="object-fit: cover; height: 400px;" width="600" height="400">
             </div>
             <div class="container mt-4">
                 <div class="row justify-content-center">
@@ -337,7 +343,7 @@
             </div>
             <div class="col-lg-5 d-flex align-items-center justify-content-center">
                 <img src="~/img/logo.png" alt="MvM Cleaning Services Logo" class="img-fluid"
-                    style="max-width: 80%; height: auto;">
+                    style="max-width: 80%; height: auto;" loading="lazy">
             </div>
         </div>
     </div>
@@ -399,31 +405,7 @@
     </div>
 </div>
 
-<!-- Testimonial Start -->
-<script>
-    $(document).ready(function () {
-        $(".testimonial-carousel").owlCarousel({
-            loop: true,
-            margin: 30,
-            nav: false,
-            dots: true,
-            autoplay: true,
-            autoplayTimeout: 5000,
-            smartSpeed: 800,
-            responsive: {
-                0: {
-                    items: 1
-                },
-                768: {
-                    items: 2
-                },
-                992: {
-                    items: 3
-                }
-            }
-        });
-    });
-</script>
+
 
 <!-- Review Schema Markup for SEO -->
 <script type="application/ld+json">
@@ -808,3 +790,29 @@
 <!-- Testimonial End -->
 
 
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $(".testimonial-carousel").owlCarousel({
+                loop: true,
+                margin: 30,
+                nav: false,
+                dots: true,
+                autoplay: true,
+                autoplayTimeout: 5000,
+                smartSpeed: 800,
+                responsive: {
+                    0: {
+                        items: 1
+                    },
+                    768: {
+                        items: 2
+                    },
+                    992: {
+                        items: 3
+                    }
+                }
+            });
+        });
+    </script>
+}
