@@ -38,6 +38,10 @@ public class Booking : Core.BaseClasses.AggregateRoot
     public Guid? PaymentId { get; private set; }
     public Payment? Payment { get; private set; }
 
+    // promotion
+    public string? AppliedPromotionCode { get; private set; }
+    public bool PromotionApplied { get; private set; }
+
     // lastly booking status
 
     public BookingCreationStatus CreationStatus { get; private set; }
@@ -82,7 +86,7 @@ public class Booking : Core.BaseClasses.AggregateRoot
         AddDomainEvent(new ContractorAssignedEvent(Id, contractor.Id));
     }
 
-    public void AddServiceToCart(string name, Guid serviceItemId, Money unitAdjustedPrice, int quantity = 1)
+    public void AddServiceToCart(string name, Guid serviceItemId, Money originalUnitPrice, int quantity = 1)
     {
         var existingItem = _serviceItems.FirstOrDefault(s => s.ServiceId == serviceItemId);
 
@@ -92,32 +96,16 @@ public class Booking : Core.BaseClasses.AggregateRoot
         }
         else
         {
-            // Apply tiered discount based on number of distinct services already in cart
-            // 1st service: 0% discount (full price)
-            // 2nd service: 10% discount
-            // 3rd+ services: 20% discount
-            int serviceCount = _serviceItems.Count;
-            decimal discountRate = serviceCount switch
-            {
-                0 => 0m,      // 1st service - full price
-                1 => 0.10m,   // 2nd service - 10% off
-                _ => 0.20m    // 3rd+ services - 20% off
-            };
-
-            var discountedPrice = unitAdjustedPrice * (1m - discountRate);
-
             var bookingItem = new BookingItem
             {
                 ServiceName = name,
                 ServiceId = serviceItemId,
-                UnitAdjustedPrice = discountedPrice,
-                OriginalPrice = unitAdjustedPrice,
-                DiscountRate = discountRate,
+                UnitAdjustedPrice = originalUnitPrice, // Will be updated in UpdateTotalPrice
+                OriginalPrice = originalUnitPrice,
+                DiscountRate = 0, // Will be updated in UpdateTotalPrice
                 Quantity = quantity,
             };
             _serviceItems.Add(bookingItem);
-
-            //AddDomainEvent(new ServiceAddedToCartEvent(serviceItemId, unitAdjustedPrice, quantity));
         }
 
         UpdateTotalPrice();
@@ -146,10 +134,32 @@ public class Booking : Core.BaseClasses.AggregateRoot
     private void UpdateTotalPrice()
     {
         TotalPrice = Money.Zero();
+        int unitCounter = 0;
 
         foreach (var item in _serviceItems)
         {
-            TotalPrice += item.UnitAdjustedPrice * item.Quantity;
+            Money itemTotal = Money.Zero();
+            decimal totalDiscountRateForItem = 0;
+
+            for (int i = 0; i < item.Quantity; i++)
+            {
+                decimal discountRate = unitCounter switch
+                {
+                    0 => 0m,      // 1st unit - full price
+                    1 => 0.10m,   // 2nd unit - 10% off
+                    _ => 0.20m    // 3rd+ unit - 20% off
+                };
+
+                itemTotal += item.OriginalPrice! * (1m - discountRate);
+                totalDiscountRateForItem += discountRate;
+                unitCounter++;
+            }
+
+            // Update item details with averaged values
+            item.UnitAdjustedPrice = itemTotal / item.Quantity;
+            item.DiscountRate = totalDiscountRateForItem / item.Quantity;
+
+            TotalPrice += itemTotal;
         }
 
         UpdatedAt = DateTime.UtcNow;
@@ -196,7 +206,13 @@ public class Booking : Core.BaseClasses.AggregateRoot
 
     public void ApplyPromotion(Promotion.Promotion promotion)
     {
+        if (PromotionApplied)
+            throw new InvalidOperationException("A promotion has already been applied to this booking.");
+
         TotalPrice = promotion.ApplyDiscount(TotalPrice);
+        AppliedPromotionCode = promotion.Code;
+        PromotionApplied = true;
+        UpdatedAt = DateTime.UtcNow;
     }
 
 

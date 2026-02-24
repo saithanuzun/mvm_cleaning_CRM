@@ -176,7 +176,6 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
 
 
     const calculateTotal = () => {
-        // Get array of selected services with their quantities
         const selectedServicesList = Object.entries(selectedServices)
             .map(([serviceId, quantity]) => {
                 const service = services.find(s => s.id === serviceId);
@@ -184,12 +183,14 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
             })
             .filter(s => s !== null);
 
-        // Apply tiered discount: 1st service full price, 2nd service 10% off, 3rd+ 20% off
         let total = 0;
-        selectedServicesList.forEach((service, index) => {
-            const discountRate = index === 0 ? 0 : index === 1 ? 0.10 : 0.20;
-            const discountedPrice = service.price * (1 - discountRate);
-            total += discountedPrice * service.quantity;
+        let unitCounter = 0;
+        selectedServicesList.forEach((service) => {
+            for (let i = 0; i < service.quantity; i++) {
+                const discountRate = unitCounter === 0 ? 0 : unitCounter === 1 ? 0.10 : 0.20;
+                total += service.price * (1 - discountRate);
+                unitCounter++;
+            }
         });
 
         return total;
@@ -317,11 +318,11 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 shadow-md">
                         <div className="flex items-center justify-center gap-3">
                             <div className="bg-green-500 rounded-full p-2">
-                                
+
                             </div>
                             <div className="text-center">
                                 <p className="text-green-800 font-bold text-lg">
-                                     Multi-Service Discount!
+                                    Multi-Service Discount!
                                 </p>
                                 <p className="text-green-700 text-sm mt-1">
                                     2nd service <span className="font-bold">10% OFF</span> • 3rd+ services <span className="font-bold">20% OFF</span>
@@ -418,8 +419,8 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                                         <div className="text-right">
                                             {(() => {
                                                 // Calculate what position this service would be if added
-                                                const currentServiceCount = Object.keys(selectedServices).length;
-                                                const wouldBePosition = isSelected ? -1 : currentServiceCount; // -1 means already selected
+                                                const currentUnitCount = Object.values(selectedServices).reduce((sum, qty) => sum + qty, 0);
+                                                const wouldBePosition = isSelected ? -1 : currentUnitCount; // -1 means already selected
                                                 const discountRate = wouldBePosition === 0 ? 0 : wouldBePosition === 1 ? 0.10 : wouldBePosition >= 2 ? 0.20 : 0;
                                                 const discountedPrice = service.price * (1 - discountRate);
                                                 const hasDiscount = discountRate > 0 && !isSelected;
@@ -561,44 +562,54 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                             {/* Selected Services List - Collapsible */}
                             <div className="mt-4 pt-4 border-t border-gray-100">
                                 <div className="flex flex-wrap gap-2">
-                                    {services
-                                        .filter(s => selectedServices[s.id])
-                                        .map((service, index) => {
-                                            const discountRate = index === 0 ? 0 : index === 1 ? 0.10 : 0.20;
-                                            const originalPrice = service.price * selectedServices[service.id];
-                                            const discountedPrice = originalPrice * (1 - discountRate);
-                                            const hasDiscount = discountRate > 0;
+                                    {(() => {
+                                        let unitCounterForSummary = 0;
+                                        return services
+                                            .filter(s => selectedServices[s.id])
+                                            .map((service) => {
+                                                const quantity = selectedServices[service.id];
+                                                const originalPriceTotal = service.price * quantity;
+                                                let discountedPriceTotal = 0;
 
-                                            return (
-                                                <div
-                                                    key={service.id}
-                                                    className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2"
-                                                >
-                                                    <span className="font-medium text-sm text-gray-800">{service.name}</span>
-                                                    <div className="flex items-center gap-1">
-                                                        <span className="text-xs bg-white px-1.5 py-0.5 rounded font-bold">
-                                                            {selectedServices[service.id]}×
-                                                        </span>
-                                                        {hasDiscount ? (
-                                                            <div className="flex items-center gap-1">
-                                                                <span className="text-xs text-gray-400 line-through">
-                                                                    £{originalPrice.toFixed(2)}
-                                                                </span>
-                                                                <span className="text-sm text-green-600 font-bold">
-                                                                    £{discountedPrice.toFixed(2)}
-                                                                </span>
-                                                                <span className="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-bold">
-                                                                    -{(discountRate * 100).toFixed(0)}%
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-sm text-gray-600">£{originalPrice.toFixed(2)}</span>
-                                                        )}
+                                                for (let i = 0; i < quantity; i++) {
+                                                    const unitDiscountRate = unitCounterForSummary === 0 ? 0 : unitCounterForSummary === 1 ? 0.10 : 0.20;
+                                                    discountedPriceTotal += service.price * (1 - unitDiscountRate);
+                                                    unitCounterForSummary++;
+                                                }
+
+                                                const averageDiscountRate = (originalPriceTotal - discountedPriceTotal) / originalPriceTotal;
+                                                const hasDiscount = averageDiscountRate > 0;
+
+                                                return (
+                                                    <div
+                                                        key={service.id}
+                                                        className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2"
+                                                    >
+                                                        <span className="font-medium text-sm text-gray-800">{service.name}</span>
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-xs bg-white px-1.5 py-0.5 rounded font-bold">
+                                                                {quantity}×
+                                                            </span>
+                                                            {hasDiscount ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-xs text-gray-400 line-through">
+                                                                        £{originalPriceTotal.toFixed(2)}
+                                                                    </span>
+                                                                    <span className="text-sm text-green-600 font-bold">
+                                                                        £{discountedPriceTotal.toFixed(2)}
+                                                                    </span>
+                                                                    <span className="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded font-bold">
+                                                                        -{(averageDiscountRate * 100).toFixed(0)}% avg
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-sm text-gray-600">£{originalPriceTotal.toFixed(2)}</span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })
-                                    }
+                                                );
+                                            });
+                                    })()}
                                 </div>
                             </div>
                         </div>

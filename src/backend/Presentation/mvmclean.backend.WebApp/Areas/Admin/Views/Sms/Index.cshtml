@@ -70,12 +70,13 @@
                     <div class="phone-list" style="max-height: 600px; overflow-y: auto;">
                         @if (Model.PhoneNumbers != null && Model.PhoneNumbers.Any())
                         {
-                            @foreach (var phoneNumber in Model.PhoneNumbers)
+                            for (int i = 0; i < Model.PhoneNumbers.Count; i++)
                             {
-                                <div class="form-check p-3 border-bottom phone-item">
+                                var phoneNumber = Model.PhoneNumbers[i];
+                                <div class="form-check p-3 border-bottom phone-item" style="cursor: pointer;" onclick="toggleCheckbox(this)">
                                     <input class="form-check-input phone-checkbox" type="checkbox" name="phoneNumbers"
-                                        value="@phoneNumber" id="phone_@phoneNumber.GetHashCode()">
-                                    <label class="form-check-label w-100" for="phone_@phoneNumber.GetHashCode()">
+                                        value="@phoneNumber" id="phone_@i" onclick="event.stopPropagation()">
+                                    <label class="form-check-label w-100" for="phone_@i" onclick="event.stopPropagation()">
                                         <i class="bi bi-phone"></i> @phoneNumber
                                     </label>
                                 </div>
@@ -211,11 +212,44 @@
                 e.preventDefault();
             }
         });
+
+        // Toggle checkbox when clicking the container
+        function toggleCheckbox(container) {
+            const checkbox = container.querySelector('.phone-checkbox');
+            checkbox.checked = !checkbox.checked;
+            updateSelectedCount();
+            
+            if (checkbox.checked) {
+                container.classList.add('selected-item');
+            } else {
+                container.classList.remove('selected-item');
+            }
+        }
+
+        // Overwrite updateSelectedCount to also handle row classes
+        const originalUpdateSelectedCount = updateSelectedCount;
+        updateSelectedCount = function() {
+            originalUpdateSelectedCount();
+            
+            document.querySelectorAll('.phone-item').forEach(item => {
+                const cb = item.querySelector('.phone-checkbox');
+                if (cb.checked) {
+                    item.classList.add('selected-item');
+                } else {
+                    item.classList.remove('selected-item');
+                }
+            });
+        };
     </script>
 
     <style>
         .phone-item:hover {
             background-color: #f8f9fa;
+        }
+
+        .phone-item.selected-item {
+            background-color: #e7f1ff;
+            border-left: 4px solid #007bff;
         }
 
         .phone-list {

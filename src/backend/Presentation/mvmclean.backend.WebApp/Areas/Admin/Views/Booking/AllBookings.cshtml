@@ -50,6 +50,7 @@
                         <table class="table table-hover mb-0 align-middle">
                             <thead class="table-light">
                                 <tr>
+                                    <th style="width:50px;">#</th>
                                     <th>Phone</th>
                                     <th>Customer</th>
                                     <th>Contractor</th>
@@ -62,13 +63,22 @@
                                 </tr>
                             </thead>
                             <tbody>
+                            @{ int rowNum = 0; }
                             @foreach (var booking in Model)
                             {
+                                rowNum++;
                                         <tr>
+                                            <td class="text-muted fw-bold">@rowNum</td>
                                             <td class="fw-semibold">
-                                                <a href="https://wa.me/@(booking.PhoneNumber?.Replace(" ", "").Replace("+", "").Replace("-", "").Replace("(", "").Replace(")", ""))" target="_blank" class="text-decoration-none">
-                                                    <i class="bi bi-whatsapp text-success"></i> @booking.PhoneNumber
-                                                </a>
+                                                <span class="d-flex align-items-center gap-2">
+                                                    <span class="phone-number-text">@booking.PhoneNumber</span>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary copy-btn py-0 px-1"
+                                                            data-phone="@booking.PhoneNumber"
+                                                            title="Copy number"
+                                                            onclick="copyPhone(this)">
+                                                        <i class="bi bi-clipboard"></i>
+                                                    </button>
+                                                </span>
                                             </td>
                                             <td>
                                         @if (!string.IsNullOrEmpty(booking.CustomerName))
@@ -142,3 +152,24 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function copyPhone(btn) {
+        const phone = btn.getAttribute('data-phone');
+        navigator.clipboard.writeText(phone).then(function() {
+            const icon = btn.querySelector('i');
+            icon.classList.remove('bi-clipboard');
+            icon.classList.add('bi-clipboard-check', 'text-success');
+            btn.classList.add('btn-success', 'text-white');
+            btn.classList.remove('btn-outline-secondary');
+            setTimeout(function() {
+                icon.classList.remove('bi-clipboard-check', 'text-success');
+                icon.classList.add('bi-clipboard');
+                btn.classList.remove('btn-success', 'text-white');
+                btn.classList.add('btn-outline-secondary');
+            }, 2000);
+        });
+    }
+</script>
+}

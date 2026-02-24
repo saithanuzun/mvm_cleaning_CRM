@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using mvmclean.backend.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using mvmclean.backend.Infrastructure.Persistence;
 namespace mvmclean.backend.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(MVMdbContext))]
-    partial class MVMdbContextModelSnapshot : ModelSnapshot
+    [Migration("20260220225542_AddAppliedPromotionCodeToBooking")]
+    partial class AddAppliedPromotionCodeToBooking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,9 +64,6 @@ namespace mvmclean.backend.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("PaymentId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("PromotionApplied")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Status")
                         .IsRequired()

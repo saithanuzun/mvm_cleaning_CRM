@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using MediatR;
 using mvmclean.backend.Domain.Aggregates.Booking;
 
@@ -18,16 +19,40 @@ public class GetAllPhoneNumbersResponse
 public class GetAllPhoneNumbersHandler : IRequestHandler<GetAllPhoneNumbersRequest, GetAllPhoneNumbersResponse>
 {
     private readonly IBookingRepository _bookingRepository;
+    private readonly IConfiguration _configuration;
     private readonly string _phoneNumbersFilePath;
 
-    public GetAllPhoneNumbersHandler(IBookingRepository bookingRepository)
+    public GetAllPhoneNumbersHandler(IBookingRepository bookingRepository, IConfiguration configuration)
     {
         _bookingRepository = bookingRepository;
-        // Path to phoneNumbers.txt in Infrastructure/Data
-        _phoneNumbersFilePath = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "..", "..", "Infrastructure", "mvmclean.backend.Infrastructure", "Data", "phoneNumbers.txt"
-        );
+        _configuration = configuration;
+
+        // Get path from configuration or use default
+        var configPath = _configuration["SmsSettings:PhoneNumbersFilePath"] ?? "Data/phoneNumbers.txt";
+
+        if (Path.IsPathRooted(configPath))
+        {
+            _phoneNumbersFilePath = configPath;
+        }
+        else
+        {
+            // Try content root (for production/deployment)
+            var contentRoot = Directory.GetCurrentDirectory();
+            var pathCheck = Path.Combine(contentRoot, configPath);
+
+            if (File.Exists(pathCheck))
+            {
+                _phoneNumbersFilePath = pathCheck;
+            }
+            else
+            {
+                // Fallback for local development (looking for Infrastructure project)
+                _phoneNumbersFilePath = Path.Combine(
+                    contentRoot,
+                    "..", "..", "Infrastructure", "mvmclean.backend.Infrastructure", "Data", "phoneNumbers.txt"
+                );
+            }
+        }
     }
 
     public async Task<GetAllPhoneNumbersResponse> Handle(GetAllPhoneNumbersRequest request, CancellationToken cancellationToken)

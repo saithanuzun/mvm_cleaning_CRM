@@ -17,10 +17,10 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
     const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'card'
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [promoCode, setPromoCode] = useState('');
+    const [promoCode, setPromoCode] = useState(bookingData.appliedPromotionCode || '');
     const [promoDiscount, setPromoDiscount] = useState(0);
     const [promoError, setPromoError] = useState('');
-    const [promoApplied, setPromoApplied] = useState(false);
+    const [promoApplied, setPromoApplied] = useState(bookingData.promotionApplied || false);
 
     // Redirect if incomplete booking data
     useEffect(() => {
@@ -28,6 +28,22 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
             navigate('/');
         }
     }, [bookingData, navigate]);
+
+    // Block browser back button when a promo has been applied
+    useEffect(() => {
+        if (!promoApplied) return;
+
+        // Push a duplicate history entry so the first back press hits our sentinel
+        window.history.pushState({ promoLock: true }, '');
+
+        const handlePopState = () => {
+            // Re-push to keep user on this page
+            window.history.pushState({ promoLock: true }, '');
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [promoApplied]);
 
     const handleInputChange = (e) => {
         setCustomerDetails({
@@ -95,6 +111,8 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
             setPromoApplied(true);
             setPaymentMethod('card'); // Force card payment when promo is applied
             setPromoError('');
+            // Persist the promotion state into shared bookingData
+            updateBookingData({ promotionApplied: true, appliedPromotionCode: promoCode.toUpperCase() });
         } catch (error) {
             setPromoError(error.message || 'Error applying promo code. Please try again.');
             setPromoApplied(false);
@@ -661,16 +679,28 @@ const BookingPage = ({ bookingData, updateBookingData }) => {
 
                     {/* Navigation Buttons */}
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t-2 border-gray-200">
-                        <button
-                            type="button"
-                            onClick={() => navigate('/time-slots')}
-                            className="px-8 py-4 border-2 border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all w-full sm:w-auto flex items-center justify-center gap-2"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                            Back to Time Slots
-                        </button>
+                        <div className="relative group w-full sm:w-auto">
+                            <button
+                                type="button"
+                                onClick={() => !promoApplied && navigate('/time-slots')}
+                                disabled={promoApplied}
+                                className={`px-8 py-4 border-2 font-bold rounded-xl transition-all w-full sm:w-auto flex items-center justify-center gap-2
+                                    ${promoApplied
+                                        ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 cursor-pointer'
+                                    }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Back to Time Slots
+                            </button>
+                            {promoApplied && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    🔒 Promo applied — navigation is locked
+                                </div>
+                            )}
+                        </div>
 
                         <button
                             type="submit"

@@ -94,6 +94,8 @@ public class BookingController : BaseApiController
                 totalPrice = response.TotalPrice,
                 currency = response.Currency,
                 paymentId = response.PaymentId,
+                appliedPromotionCode = response.AppliedPromotionCode,
+                promotionApplied = response.PromotionApplied,
                 status = response.Status.ToString(),
                 creationStatus = response.CreationStatus.ToString(),
                 createdAt = response.CreatedAt,

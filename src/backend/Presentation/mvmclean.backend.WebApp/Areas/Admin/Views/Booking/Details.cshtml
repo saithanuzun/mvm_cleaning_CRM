@@ -74,9 +74,15 @@
                         <div class="col-md-6">
                             <label class="text-muted"><small>Phone Number</small></label>
                             <p class="fw-semibold">
-                                <a href="https://wa.me/@(Model.PhoneNumber?.Replace(" ", "").Replace("+", "").Replace("-", "").Replace("(", "").Replace(")", ""))" target="_blank" class="text-decoration-none">
-                                    <i class="bi bi-whatsapp text-success"></i> @Model.PhoneNumber
-                                </a>
+                                <span class="d-flex align-items-center gap-2">
+                                    <span>@Model.PhoneNumber</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary copy-btn py-0 px-2"
+                                            data-phone="@Model.PhoneNumber"
+                                            title="Copy number"
+                                            onclick="copyPhone(this)">
+                                        <i class="bi bi-clipboard"></i> Copy
+                                    </button>
+                                </span>
                             </p>
                         </div>
                     </div>
@@ -105,6 +111,22 @@
                             <label class="text-muted"><small>Creation Status</small></label>
                             <p>
                                 <span class="badge bg-info">@Model.CreationStatus</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted"><small>Promotion Code Used</small></label>
+                            <p>
+                                @if (!string.IsNullOrEmpty(Model.AppliedPromotionCode))
+                                {
+                                    <span class="badge bg-success font-monospace fs-6"><i class="bi bi-tag-fill me-1"></i>@Model.AppliedPromotionCode</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">null</span>
+                                }
                             </p>
                         </div>
                     </div>
@@ -185,9 +207,15 @@
                     {
                         <p class="mb-2"><strong>@Model.Customer.FirstName @Model.Customer.LastName</strong></p>
                         <p class="mb-2">
-                             <a href="https://wa.me/@(Model.Customer.PhoneNumber?.Value?.Replace(" ", "").Replace("+", "").Replace("-", "").Replace("(", "").Replace(")", ""))" target="_blank" class="text-decoration-none">
-                                <i class="bi bi-whatsapp text-success"></i> @Model.Customer.PhoneNumber?.Value
-                            </a>
+                            <span class="d-flex align-items-center gap-2">
+                                <span>@Model.Customer.PhoneNumber?.Value</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary copy-btn py-0 px-1"
+                                        data-phone="@Model.Customer.PhoneNumber?.Value"
+                                        title="Copy number"
+                                        onclick="copyPhone(this)">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </span>
                         </p>
                         <p class="text-muted small mb-0">Email: @Model.Customer.Email</p>
                         @if (Model.Customer.Address != null)
@@ -245,3 +273,24 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function copyPhone(btn) {
+        const phone = btn.getAttribute('data-phone');
+        navigator.clipboard.writeText(phone).then(function() {
+            const icon = btn.querySelector('i');
+            icon.classList.remove('bi-clipboard');
+            icon.classList.add('bi-clipboard-check', 'text-success');
+            btn.classList.add('btn-success', 'text-white');
+            btn.classList.remove('btn-outline-secondary');
+            setTimeout(function() {
+                icon.classList.remove('bi-clipboard-check', 'text-success');
+                icon.classList.add('bi-clipboard');
+                btn.classList.remove('btn-success', 'text-white');
+                btn.classList.add('btn-outline-secondary');
+            }, 2000);
+        });
+    }
+</script>
+}

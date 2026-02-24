@@ -39,6 +39,9 @@ public class GetBookingByIdResponse
     public BookingCreationStatus CreationStatus { get; set; }
     public BookingStatus Status { get; set; }
 
+    public string? AppliedPromotionCode { get; set; }
+    public bool PromotionApplied { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
@@ -101,6 +104,9 @@ public class GetBookingByIdHandler : IRequestHandler<GetBookingByIdRequest, GetB
 
             CreationStatus = booking.CreationStatus,
             Status = booking.Status,
+
+            AppliedPromotionCode = booking.AppliedPromotionCode,
+            PromotionApplied = booking.PromotionApplied,
 
             CreatedAt = booking.CreatedAt,
             UpdatedAt = booking.UpdatedAt
