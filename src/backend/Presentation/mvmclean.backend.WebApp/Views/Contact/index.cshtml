@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Contact";
+ViewData["Title"] = "Contact";
 }
 
 <style>
@@ -35,6 +35,13 @@
         border-color: #2d5fa3;
     }
 
+    .btn-primary:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+
     .alert {
         padding: 15px;
         border-radius: 4px;
@@ -51,6 +58,77 @@
         background-color: #f8d7da;
         border: 1px solid #f5c6cb;
         color: #721c24;
+    }
+
+    .captcha-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .captcha-question {
+        font-size: 18px;
+        font-weight: 600;
+        color: #194376;
+        margin-bottom: 15px;
+    }
+
+    .captcha-input {
+        max-width: 300px;
+        margin: 0 auto;
+        text-align: center;
+        font-size: 16px;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        display: block;
+    }
+
+    .captcha-input:focus {
+        border-color: #194376;
+        outline: none;
+    }
+
+    .captcha-error {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 10px;
+        display: none;
+    }
+
+    .captcha-success {
+        color: #28a745;
+        font-size: 14px;
+        margin-top: 10px;
+        display: none;
+    }
+
+    .refresh-captcha {
+        background: none;
+        border: none;
+        color: #194376;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 10px;
+        text-decoration: underline;
+    }
+
+    .refresh-captcha:hover {
+        color: #2d5fa3;
+    }
+
+    /* Hide honeypot from real users */
+    .honeypot {
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        opacity: 0;
+        height: 0;
+        width: 0;
+        overflow: hidden;
     }
 </style>
 
@@ -117,16 +195,16 @@
                 <div class="contact-form">
                     @if (TempData["Success"] != null)
                     {
-                        <div class="alert alert-success" role="alert">
-                            @TempData["Success"]
-                        </div>
+                    <div class="alert alert-success" role="alert">
+                        @TempData["Success"]
+                    </div>
                     }
 
                     @if (TempData["Error"] != null)
                     {
-                        <div class="alert alert-danger" role="alert">
-                            @TempData["Error"]
-                        </div>
+                    <div class="alert alert-danger" role="alert">
+                        @TempData["Error"]
+                    </div>
                     }
 
                     <form method="post" action="/contact" id="contactForm">
@@ -162,10 +240,39 @@
                                       placeholder="Your Message" required></textarea>
                         </div>
 
-                        <input type="text" name="website" style="display:none">
+                        <!-- Enhanced Honeypot - Bots will fill this -->
+                        <div class="honeypot">
+                            <label for="website">Website</label>
+                            <input type="text" name="website" id="website"
+                                   placeholder="Please leave this field empty"
+                                   autocomplete="off"
+                                   tabindex="-1">
+                        </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane mr-2"></i> Send Message
+                        <!-- Manual CAPTCHA -->
+                        <div class="captcha-container">
+                            <div class="captcha-question" id="captchaQuestion">
+                                🔒 Security Check: What is the capital city of the United Kingdom?
+                            </div>
+                            <input type="text"
+                                   class="captcha-input"
+                                   name="captchaAnswer"
+                                   id="captchaAnswer"
+                                   placeholder="Enter your answer"
+                                   autocomplete="off">
+                            <div id="captchaError" class="captcha-error">
+                                ❌ Incorrect answer. Please try again.
+                            </div>
+                            <div id="captchaSuccess" class="captcha-success">
+                                ✓ Correct! You can submit the form.
+                            </div>
+                            <button type="button" class="refresh-captcha" onclick="refreshCaptcha()">
+                                🔄 Different question
+                            </button>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="fas fa-paper-plane mr-2"></i> Complete CAPTCHA to Send
                         </button>
                     </form>
                 </div>
@@ -175,8 +282,200 @@
 </div>
 <!-- Contact End -->
 
+<script>
+    // CAPTCHA questions database
+    const captchaQuestions = [
+        {
+            question: "What is the capital city of the United Kingdom?",
+            answers: ["london", "London", "LONDON"]
+        },
+        {
+            question: "What is 5 + 3?",
+            answers: ["8", "eight", "Eight", "EIGHT"]
+        },
+        {
+            question: "What color is the sky on a clear day?",
+            answers: ["blue", "Blue", "BLUE"]
+        },
+        {
+            question: "What is the first month of the year?",
+            answers: ["january", "January", "JANUARY"]
+        },
+        {
+            question: "How many days are in a week?",
+            answers: ["7", "seven", "Seven", "SEVEN"]
+        },
+        {
+            question: "What is 10 - 4?",
+            answers: ["6", "six", "Six", "SIX"]
+        },
+        {
+            question: "What is the opposite of 'hot'?",
+            answers: ["cold", "Cold", "COLD"]
+        },
+        {
+            question: "How many hours are in a day?",
+            answers: ["24", "twenty four", "Twenty four", "TWENTY FOUR"]
+        }
+    ];
 
+    let currentQuestionIndex = 0;
+    let isCaptchaValid = false;
 
+    // Function to load a random CAPTCHA question
+    function loadRandomCaptcha() {
+        currentQuestionIndex = Math.floor(Math.random() * captchaQuestions.length);
+        const captchaQuestionDiv = document.getElementById('captchaQuestion');
+        if (captchaQuestionDiv) {
+            captchaQuestionDiv.innerHTML = `🔒 Security Check: ${captchaQuestions[currentQuestionIndex].question}`;
+        }
 
+        // Clear previous answer and status
+        const captchaInput = document.getElementById('captchaAnswer');
+        if (captchaInput) {
+            captchaInput.value = '';
+        }
 
+        // Reset validation status
+        isCaptchaValid = false;
 
+        // Hide error and success messages
+        const captchaError = document.getElementById('captchaError');
+        const captchaSuccess = document.getElementById('captchaSuccess');
+        if (captchaError) captchaError.style.display = 'none';
+        if (captchaSuccess) captchaSuccess.style.display = 'none';
+
+        // Disable submit button
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Complete CAPTCHA to Send';
+        }
+    }
+
+    // Function to refresh CAPTCHA
+    function refreshCaptcha() {
+        loadRandomCaptcha();
+    }
+
+    // Function to validate CAPTCHA in real-time
+    function validateCaptcha() {
+        const userAnswer = document.getElementById('captchaAnswer').value.trim();
+        const currentQuestion = captchaQuestions[currentQuestionIndex];
+
+        if (!userAnswer) {
+            isCaptchaValid = false;
+            document.getElementById('captchaError').style.display = 'none';
+            document.getElementById('captchaSuccess').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Complete CAPTCHA to Send';
+            return false;
+        }
+
+        // Check if answer matches any valid answer for current question
+        const isValid = currentQuestion.answers.some(answer =>
+            answer.toLowerCase() === userAnswer.toLowerCase()
+        );
+
+        if (isValid) {
+            isCaptchaValid = true;
+            document.getElementById('captchaError').style.display = 'none';
+            document.getElementById('captchaSuccess').style.display = 'block';
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Send Message';
+        } else {
+            isCaptchaValid = false;
+            document.getElementById('captchaError').style.display = 'block';
+            document.getElementById('captchaSuccess').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Complete CAPTCHA to Send';
+        }
+
+        return isValid;
+    }
+
+    // Function to check honeypot (bot trap)
+    function checkHoneypot() {
+        const websiteField = document.getElementById('website');
+        if (websiteField && websiteField.value.trim() !== '') {
+            // Bot detected - silently fail
+            console.log('Bot detected');
+            return false;
+        }
+        return true;
+    }
+
+    // Function to check form submission speed
+    let formLoadTime = Date.now();
+    let submissionCount = 0;
+    let lastSubmissionTime = 0;
+
+    // Load random CAPTCHA on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRandomCaptcha();
+        formLoadTime = Date.now();
+
+        // Add real-time validation on CAPTCHA input
+        const captchaInput = document.getElementById('captchaAnswer');
+        if (captchaInput) {
+            captchaInput.addEventListener('input', function() {
+                validateCaptcha();
+            });
+        }
+
+        // Add form submission validation
+        const form = document.getElementById('contactForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Check honeypot
+                if (!checkHoneypot()) {
+                    e.preventDefault();
+                    alert('Invalid submission detected.');
+                    return false;
+                }
+
+                // Check if CAPTCHA is valid
+                if (!isCaptchaValid) {
+                    e.preventDefault();
+                    alert('Please complete the security check correctly.');
+                    return false;
+                }
+
+                // Check if form was submitted too quickly (less than 10 seconds on page)
+                const timeOnPage = Date.now() - formLoadTime;
+                if (timeOnPage < 10000) {
+                    e.preventDefault();
+                    alert('Please take a moment to fill out the form properly.');
+                    return false;
+                }
+
+                // Check if submitting too frequently (more than 2 times per hour)
+                const now = Date.now();
+                if (lastSubmissionTime > 0 && (now - lastSubmissionTime) < 1800000) {
+                    e.preventDefault();
+                    alert('You have submitted recently. Please wait before submitting again.');
+                    return false;
+                }
+
+                submissionCount++;
+                lastSubmissionTime = now;
+
+                // Disable submit button to prevent double submission
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+
+                return true;
+            });
+        }
+    });
+
+    // Additional protection: Block right-click on form to prevent bot tools
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('#contactForm')) {
+            // Optional: uncomment to block right-click on form
+            // e.preventDefault();
+            // return false;
+        }
+    });
+</script>
