@@ -1,145 +1,62 @@
-@using mvmclean.backend.WebApp.Areas.Admin.Controllers
-@model CreateInvoiceViewModel
+<form method="post" action="@Url.Action("Generate", "Invoice", new { area = "Admin" })">
+    @Html.AntiForgeryToken()
 
-@{
-    ViewData["Title"] = "Create Invoice";
-}
-
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h2 class="mb-1">
-                <i class="bi bi-receipt"></i> Create Invoice
-            </h2>
-            <p class="text-muted mb-0">Generate a new invoice from a booking</p>
-        </div>
+    <div class="mb-3">
+        <label for="ClientName" class="form-label">Client Name *</label>
+        <input type="text" 
+               id="ClientName" 
+               name="ClientName" 
+               class="form-control" 
+               value="@Model?.ClientName" />
     </div>
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Invoice Details</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="@Url.Action("Create", "Invoice")">
-                        <div class="mb-3">
-                            <label for="BookingId" class="form-label">Booking <span class="text-danger">*</span></label>
-                            <input type="hidden" id="BookingId" name="BookingId" />
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="BookingIdDisplay" placeholder="Select a booking..."
-                                    readonly data-bs-toggle="modal" data-bs-target="#bookingModal" style="cursor: pointer;" />
-                                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" 
-                                    data-bs-target="#bookingModal" title="Browse bookings">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
-                            @{
-                                var bookingIdState = ViewData.ModelState["BookingId"];
-                                if (bookingIdState != null)
-                                {
-                                    var rawValue = bookingIdState.RawValue?.ToString();
-                                    if (!string.IsNullOrEmpty(rawValue))
-                                    {
-                                        <span class="text-danger small">Please select a booking</span>
-                                    }
-                                }
-                            }
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="PaymentTermsDays" class="form-label">Payment Terms (Days) <span class="text-danger">*</span></label>
-                            <select class="form-select" id="PaymentTermsDays" name="PaymentTermsDays">
-                                <option value="0">Due on Receipt</option>
-                                <option value="7">Net 7</option>
-                                <option value="15">Net 15</option>
-                                <option value="30" selected>Net 30</option>
-                                <option value="45">Net 45</option>
-                                <option value="60">Net 60</option>
-                            </select>
-                        </div>
-
-                        <hr />
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="@Url.Action("AllInvoices", "Invoice")" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Create Invoice
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-secondary text-white">
-                    <h6 class="mb-0">
-                        <i class="bi bi-info-circle"></i> Information
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <p class="small text-muted mb-3">
-                        <strong>Note:</strong> An invoice will be created for the selected booking with the specified payment terms. 
-                        Make sure the booking has a customer assigned.
-                    </p>
-                    <div class="alert alert-info small" role="alert">
-                        <i class="bi bi-lightbulb"></i> You can mark invoices as paid and download them from the invoice details page.
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="mb-3">
+        <label for="ClientAddress" class="form-label">Client Address *</label>
+        <textarea id="ClientAddress" 
+                  name="ClientAddress"  
+                  class="form-control" 
+                  rows="3">@Model?.ClientAddress</textarea>
     </div>
 
-    <!-- Booking Selection Modal -->
-    <div class="modal fade" id="bookingModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Select a Booking</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="bookingList" style="max-height: 400px; overflow-y: auto;">
-                        <p class="text-muted">Loading bookings...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="mb-3">
+        <label for="Description" class="form-label">Service Description *</label>
+        <textarea id="Description" 
+                  name="Description"  
+                  class="form-control" 
+                  rows="3">@Model?.Description</textarea>
     </div>
-</div>
 
-@section Scripts {
-    <script>
-        document.getElementById('bookingModal').addEventListener('show.bs.modal', function() {
-            // In a real implementation, you would fetch bookings via AJAX
-            // For now, show a placeholder message
-            document.getElementById('bookingList').innerHTML = `
-                <div class="alert alert-info">
-                    <p>Bookings list integration coming soon.</p>
-                    <p>For now, you can enter the Booking ID directly in the input field above.</p>
-                </div>
-            `;
-        });
+    <div class="mb-3">
+        <label for="Amount" class="form-label">Amount (£) *</label>
+        <input type="number" 
+               id="Amount" 
+               name="Amount"  
+               step="0.01" 
+               class="form-control" 
+               value="@Model?.Amount" />
+    </div>
 
-        // Allow manual input of booking ID
-        document.getElementById('BookingIdDisplay').addEventListener('click', function() {
-            var bookingId = prompt('Enter the Booking ID (GUID):');
-            if (bookingId && bookingId.trim() !== '') {
-                document.getElementById('BookingId').value = bookingId;
-                document.getElementById('BookingIdDisplay').value = bookingId;
-            }
-        });
-    </script>
-}
+    <div class="mb-3">
+        <label for="PaymentDue" class="form-label">Payment Terms</label>
+        <select id="PaymentDue" 
+                name="PaymentDue" 
+                class="form-select">
+            <option value="-1">Due on Receipt</option>
+            <option value="0">Already Paid</option>
+            <option value="7">Due in 7 days</option>
+            <option value="14">Due in 14 days</option>
+            <option value="30">Due in 30 days</option>
+        </select>
+    </div>
+
+    <div class="mb-4">
+        <label for="DateTime" class="form-label">Invoice Date</label>
+        <input type="datetime-local" 
+               id="DateTime" 
+               name="DateTime"  
+               class="form-control" 
+               value="@Model?.DateTime.ToString("yyyy-MM-ddTHH:mm")" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Generate Invoice</button>
+</form>

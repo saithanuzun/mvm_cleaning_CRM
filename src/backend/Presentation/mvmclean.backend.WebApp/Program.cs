@@ -2,6 +2,7 @@ using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using mvmclean.backend.Application;
 using mvmclean.backend.Infrastructure;
+using mvmclean.backend.Infrastructure.InvoicingService;
 using mvmclean.backend.Infrastructure.Persistence;
 using mvmclean.backend.Infrastructure.Seeding;
 
@@ -33,8 +34,10 @@ builder.Services.AddAuthentication()
         options.ExpireTimeSpan = TimeSpan.FromDays(60);
     });
 
-builder.Services.AddInfrastructureRegistration();
 builder.Services.AddApplicationRegistration();
+builder.Services.AddInfrastructureRegistration();
+builder.Services.AddScoped<InvoiceCreator>();
+
 
 
 var app = builder.Build();

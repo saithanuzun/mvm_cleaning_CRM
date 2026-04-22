@@ -22,8 +22,10 @@
                 </button>
                 @if (Model.Status != mvmclean.backend.Domain.Aggregates.Invoice.Enums.InvoiceStatus.Paid)
                 {
-                    <form method="post" action="@Url.Action("MarkAsPaid", "Invoice", new { invoiceId = Model.Id })" style="display: inline;">
-                        <button type="submit" class="btn btn-success" onclick="return confirm('Mark this invoice as paid?')">
+                    <form method="post" action="@Url.Action("MarkAsPaid", "Invoice", new { invoiceId = Model.Id })"
+                        style="display: inline;">
+                        <button type="submit" class="btn btn-success"
+                            onclick="return confirm('Mark this invoice as paid?')">
                             <i class="bi bi-check-circle"></i> Mark as Paid
                         </button>
                     </form>
@@ -51,7 +53,7 @@
     @if (Model.IsOverdue && Model.Status != mvmclean.backend.Domain.Aggregates.Invoice.Enums.InvoiceStatus.Paid)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> <strong>OVERDUE!</strong> This invoice is overdue by 
+            <i class="bi bi-exclamation-triangle"></i> <strong>OVERDUE!</strong> This invoice is overdue by
             @((DateTime.UtcNow - Model.DueDate).Days) day(s)
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -184,7 +186,8 @@
                         <p class="h5 fw-bold text-success">£@Model.TotalAmount.ToString("0.00")</p>
                     </div>
 
-                    @if (Model.Status == mvmclean.backend.Domain.Aggregates.Invoice.Enums.InvoiceStatus.Paid && Model.PaidDate.HasValue)
+                    @if (Model.Status == mvmclean.backend.Domain.Aggregates.Invoice.Enums.InvoiceStatus.Paid &&
+                    Model.PaidDate.HasValue)
                     {
                         <div class="alert alert-success small mt-3" role="alert">
                             <i class="bi bi-check-circle"></i> Paid on @Model.PaidDate.Value.ToString("dd/MM/yyyy")

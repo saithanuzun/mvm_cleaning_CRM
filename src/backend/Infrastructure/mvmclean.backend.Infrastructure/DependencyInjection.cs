@@ -10,6 +10,7 @@ using mvmclean.backend.Domain.Aggregates.Invoice;
 using mvmclean.backend.Domain.Aggregates.Promotion;
 using mvmclean.backend.Domain.Aggregates.SeoPage;
 using mvmclean.backend.Domain.Aggregates.Service;
+using mvmclean.backend.Infrastructure.InvoicingService;
 using mvmclean.backend.Infrastructure.Persistence;
 using mvmclean.backend.Infrastructure.Persistence.Repositories;
 using mvmclean.backend.Infrastructure.Repositories;
@@ -47,6 +48,8 @@ public static class DependencyInjection
         // Register infrastructure services
         serviceCollection.AddScoped<IStripeService, StripeService>();
         serviceCollection.AddScoped<IInvoiceService, Services.InvoiceService>();
+        
+        serviceCollection.AddScoped<InvoiceCreator>();
 
         // Register Resend email provider
         serviceCollection.Configure<ResendClientOptions>(options =>
