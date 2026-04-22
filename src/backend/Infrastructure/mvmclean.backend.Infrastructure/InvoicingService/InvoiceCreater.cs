@@ -485,7 +485,12 @@ public string CreateInvoiceHtml(decimal amount, string address, string name, Dat
                 <div class='footer-content'>
                     <h3>MVM Cleaning</h3>
                     <p>
-                        Thank you for your business!
+                        Thank you for your business!<br><br>
+
+                        <strong>Bank Details:</strong><br>
+                        Account Name: MVM Cleaning<br>
+                        Sort Code: 40-28-06<br>
+                        Account Number: 55418275<br>
                     </p>
                     <div class='thank-you'>
                         If you have any questions, please contact us.
