@@ -1,5 +1,5 @@
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -8,7 +8,7 @@ using mvmclean.backend.Application.Services;
 namespace mvmclean.backend.Infrastructure.Services;
 
 /// <summary>
-/// Calls an external LLM HTTP API (OpenAI-compatible chat completions by default).
+/// Google Gemini generateContent API (https://generativelanguage.googleapis.com).
 /// </summary>
 public class LlmService : ILlmService
 {
@@ -16,17 +16,14 @@ public class LlmService : ILlmService
     private readonly IConfiguration _configuration;
     private readonly ILogger<LlmService> _logger;
 
-    private bool _clientInitialized = false;
-    private readonly object _initLock = new();
-
     public LlmService(
         HttpClient httpClient,
         IConfiguration configuration,
         ILogger<LlmService> logger)
     {
-        _httpClient    = httpClient    ?? throw new ArgumentNullException(nameof(httpClient));
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger        = logger        ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<LlmCompletionResult> GenerateReplyAsync(
@@ -42,141 +39,104 @@ public class LlmService : ILlmService
             };
         }
 
-        var apiUrl      = _configuration["Llm:ApiUrl"];
-        var apiKey      = _configuration["Llm:ApiKey"];
-        var model       = _configuration["Llm:Model"] ?? "gemini";
+        var requestUrl = BuildGeminiRequestUrl();
         var systemPrompt = _configuration["Llm:SystemPrompt"]
-            ?? "You are Emma, the WhatsApp assistant for MvM Cleaning, a professional carpet, sofa, and upholstery cleaning company in the UK. Answer concisely. For all services, pricing, coverage, and booking information, use only accurate details from https://www.mvmcleaning.com — do not invent prices or services. If unsure, offer to have a team member follow up.";
+            ?? "You are Emma, the WhatsApp assistant for MvM Cleaning. Use only information from https://www.mvmcleaning.com.";
 
-        // ── Dev / staging: no API URL configured ──────────────────────────────
-        if (string.IsNullOrWhiteSpace(apiUrl))
+        if (string.IsNullOrWhiteSpace(requestUrl))
         {
-            _logger.LogWarning("Llm:ApiUrl is not configured; returning placeholder reply.");
+            _logger.LogWarning("Llm API URL is not configured; returning placeholder reply.");
             return new LlmCompletionResult
             {
                 Success = true,
                 Message = "LLM API not configured (placeholder reply)",
-                Reply   = $"Thanks for your message. We received: \"{request.UserMessage}\". A team member will follow up shortly."
+                Reply = $"Thanks for your message. We received: \"{request.UserMessage}\". A team member will follow up shortly."
             };
         }
 
-        // ── One-time client initialisation (BaseAddress + auth header) ─────────
-        EnsureClientInitialized(apiUrl, apiKey);
-
-        // ── Send ───────────────────────────────────────────────────────────────
         try
         {
-            var payload = new
+            var payload = BuildGeminiPayload(request, systemPrompt);
+            var json = JsonSerializer.Serialize(payload);
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUrl)
             {
-                model,
-                messages = BuildChatMessages(request, systemPrompt)
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
 
-            _logger.LogDebug("Sending LLM request to {ApiUrl} with model {Model}.", apiUrl, model);
+            _logger.LogDebug("Sending Gemini request to {Url}", MaskApiKeyInUrl(requestUrl));
 
-            var response = await _httpClient.PostAsJsonAsync(
-                string.Empty, payload, cancellationToken);
-
+            var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError(
-                    "LLM API returned {StatusCode} {ReasonPhrase}. Body: {Body}",
-                    (int)response.StatusCode, response.ReasonPhrase, responseBody);
+                    "Gemini API returned {StatusCode}. Body: {Body}",
+                    (int)response.StatusCode, responseBody);
 
                 return new LlmCompletionResult
                 {
                     Success = false,
-                    Message = $"LLM API error: {(int)response.StatusCode} {response.ReasonPhrase}"
+                    Message = $"Gemini API error: {(int)response.StatusCode} {response.ReasonPhrase}"
                 };
             }
 
-            var reply = ExtractReplyFromResponse(responseBody);
-
+            var reply = ExtractGeminiReply(responseBody);
             if (string.IsNullOrWhiteSpace(reply))
             {
-                _logger.LogWarning("LLM API responded successfully but returned an empty reply.");
                 return new LlmCompletionResult
                 {
                     Success = false,
-                    Message = "LLM API returned an empty reply"
+                    Message = "Gemini API returned an empty reply"
                 };
             }
-
-            _logger.LogInformation("LLM reply generated successfully.");
 
             return new LlmCompletionResult
             {
                 Success = true,
                 Message = "Reply generated",
-                Reply   = reply.Trim()
+                Reply = reply.Trim()
             };
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("LLM API request was cancelled.");
             return new LlmCompletionResult
             {
                 Success = false,
                 Message = "LLM request was cancelled"
             };
         }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "HTTP request failed while calling LLM API.");
-            return new LlmCompletionResult
-            {
-                Success = false,
-                Message = $"HTTP request failed: {ex.Message}"
-            };
-        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error while calling LLM API.");
+            _logger.LogError(ex, "Failed to call Gemini API.");
             return new LlmCompletionResult
             {
                 Success = false,
-                Message = $"Failed to call LLM API: {ex.Message}"
+                Message = $"Failed to call Gemini API: {ex.Message}"
             };
         }
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Sets BaseAddress and the Bearer auth header once, thread-safely.
-    /// Mutating BaseAddress after the first request throws, so we guard with a flag.
-    /// </summary>
-    private void EnsureClientInitialized(string apiUrl, string? apiKey)
+    private string? BuildGeminiRequestUrl()
     {
-        if (_clientInitialized) return;
+        var apiUrl = _configuration["Llm:ApiUrl"];
+        if (!string.IsNullOrWhiteSpace(apiUrl))
+            return apiUrl;
 
-        lock (_initLock)
-        {
-            if (_clientInitialized) return;
+        var apiBaseUrl = _configuration["Llm:ApiBaseUrl"]
+            ?? "https://generativelanguage.googleapis.com/v1beta/models";
+        var model = _configuration["Llm:Model"] ?? "gemini-2.5-flash";
+        var apiKey = _configuration["Llm:ApiKey"];
 
-            _httpClient.BaseAddress = new Uri(apiUrl);
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return null;
 
-            if (!string.IsNullOrWhiteSpace(apiKey))
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", apiKey);
-
-            _clientInitialized = true;
-        }
+        return $"{apiBaseUrl.TrimEnd('/')}/{model}:generateContent?key={apiKey}";
     }
 
-    /// <summary>
-    /// Builds the messages array for the chat completion request.
-    /// If the request has history, each item is mapped to a role/content pair.
-    /// Otherwise a single user message is built from the request fields.
-    /// </summary>
-    private static object[] BuildChatMessages(LlmChatRequest request, string systemPrompt)
+    private static object BuildGeminiPayload(LlmChatRequest request, string systemPrompt)
     {
-        var messages = new List<object>
-        {
-            new { role = "system", content = systemPrompt }
-        };
+        var contents = new List<object>();
 
         if (request.History.Count > 0)
         {
@@ -186,23 +146,35 @@ public class LlmService : ILlmService
                     continue;
 
                 var role = item.Role.Equals("assistant", StringComparison.OrdinalIgnoreCase)
-                    ? "assistant"
+                    || item.Role.Equals("model", StringComparison.OrdinalIgnoreCase)
+                    ? "model"
                     : "user";
 
-                messages.Add(new { role, content = item.Content });
+                contents.Add(new
+                {
+                    role,
+                    parts = new[] { new { text = item.Content } }
+                });
             }
         }
         else
         {
-            messages.Add(new { role = "user", content = BuildUserContent(request) });
+            contents.Add(new
+            {
+                parts = new[] { new { text = BuildUserContent(request) } }
+            });
         }
 
-        return messages.ToArray();
+        return new
+        {
+            systemInstruction = new
+            {
+                parts = new[] { new { text = systemPrompt } }
+            },
+            contents
+        };
     }
 
-    /// <summary>
-    /// Builds a plain-text user message that includes available contact context.
-    /// </summary>
     private static string BuildUserContent(LlmChatRequest request)
     {
         var parts = new List<string>();
@@ -213,52 +185,58 @@ public class LlmService : ILlmService
         if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
             parts.Add($"Phone: {request.PhoneNumber}");
 
-        parts.Add($"Message: {request.UserMessage}");
+        parts.Add(request.UserMessage);
 
         return string.Join("\n", parts);
     }
 
-    /// <summary>
-    /// Parses the LLM API response body and extracts the reply text.
-    /// Supports OpenAI-compatible format first, then common fallback keys.
-    /// Returns null if no reply text could be found.
-    /// </summary>
-    private static string? ExtractReplyFromResponse(string responseBody)
+    private static string? ExtractGeminiReply(string responseBody)
     {
-        if (string.IsNullOrWhiteSpace(responseBody)) return null;
+        if (string.IsNullOrWhiteSpace(responseBody))
+            return null;
 
         try
         {
-            using var doc  = JsonDocument.Parse(responseBody);
-            var       root = doc.RootElement;
+            using var doc = JsonDocument.Parse(responseBody);
+            var root = doc.RootElement;
 
-            // OpenAI-compatible: choices[0].message.content
+            // Gemini: candidates[0].content.parts[0].text
+            if (root.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+            {
+                var first = candidates[0];
+                if (first.TryGetProperty("content", out var content) &&
+                    content.TryGetProperty("parts", out var parts) &&
+                    parts.GetArrayLength() > 0 &&
+                    parts[0].TryGetProperty("text", out var text))
+                {
+                    return text.GetString();
+                }
+            }
+
+            // Fallback for other providers
             if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
             {
                 var first = choices[0];
-
                 if (first.TryGetProperty("message", out var msg) &&
                     msg.TryGetProperty("content", out var content))
                     return content.GetString();
-
-                if (first.TryGetProperty("text", out var text))
-                    return text.GetString();
-            }
-
-            // Generic fallback keys
-            foreach (var key in new[] { "reply", "response", "output", "text", "content" })
-            {
-                if (root.TryGetProperty(key, out var value) &&
-                    value.ValueKind == JsonValueKind.String)
-                    return value.GetString();
             }
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
-            // Non-JSON or malformed body — caller handles the null return
-            _ = ex;
+            // ignore
         }
 
         return null;
+    }
+
+    private static string MaskApiKeyInUrl(string url)
+    {
+        const string keyParam = "key=";
+        var idx = url.IndexOf(keyParam, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+            return url;
+
+        return url[..(idx + keyParam.Length)] + "***";
     }
 }

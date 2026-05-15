@@ -8,16 +8,13 @@ using mvmclean.backend.Application.Services;
 namespace mvmclean.backend.Infrastructure.Services;
 
 /// <summary>
-/// Sends messages via the external WhatsApp API (not Meta Cloud API directly).
+/// POST {baseUrl}/messages/send with body: {"to":"447862265412","text":"..."}
 /// </summary>
 public class WhatsAppService : IWhatsAppService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<WhatsAppService> _logger;
-
-    private bool _clientInitialized = false;
-    private readonly object _initLock = new();
 
     public WhatsAppService(
         HttpClient httpClient,
@@ -40,20 +37,18 @@ public class WhatsAppService : IWhatsAppService
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Message must not be empty.", nameof(message));
 
-        var baseUrl  = _configuration["WhatsApp:ExternalApiBaseUrl"];
+        var baseUrl = _configuration["WhatsApp:ExternalApiBaseUrl"];
         var sendPath = _configuration["WhatsApp:SendPath"] ?? "messages/send";
-        var apiKey   = _configuration["WhatsApp:ApiKey"];
+        var apiKey = _configuration["WhatsApp:ApiKey"];
 
         var to = WhatsAppJidHelper.IsWhatsAppJid(toPhoneNumber)
-            ? toPhoneNumber
+            ? WhatsAppJidHelper.ExtractPhoneNumber(toPhoneNumber)
             : NormalizePhoneNumber(toPhoneNumber);
 
-        // ── Dev / staging: no external URL configured ──────────────────────────
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
             _logger.LogInformation(
-                "WhatsApp send skipped (ExternalApiBaseUrl not configured). " +
-                "Recipient: {PhoneNumber} | Message: {Message}",
+                "WhatsApp send skipped (ExternalApiBaseUrl not configured). To: {To} | Text: {Text}",
                 to, message);
 
             return new WhatsAppSendResult
@@ -63,151 +58,79 @@ public class WhatsAppService : IWhatsAppService
             };
         }
 
-        // ── One-time client initialisation (BaseAddress + auth header) ─────────
-        EnsureClientInitialized(baseUrl, apiKey);
+        var requestUri = new Uri($"{baseUrl.TrimEnd('/')}/{sendPath.TrimStart('/')}");
 
-        // ── Send ───────────────────────────────────────────────────────────────
         try
         {
-            var payload = new
-            {
-                to = WhatsAppJidHelper.IsWhatsAppJid(to)
-                    ? WhatsAppJidHelper.ExtractPhoneNumber(to)
-                    : to,
-                text = message
-            };
+            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            request.Content = JsonContent.Create(new { to, text = message });
 
-            _logger.LogDebug(
-                "Sending WhatsApp message to {PhoneNumber} via {BaseUrl}{Path}",
-                to, baseUrl, sendPath);
+            if (!string.IsNullOrWhiteSpace(apiKey))
+                request.Headers.Add("X-API-Key", apiKey);
 
-            var response = await _httpClient.PostAsJsonAsync(
-                sendPath.TrimStart('/'), payload, cancellationToken);
+            _logger.LogDebug("POST {Uri} to={To}", requestUri, to);
 
+            var response = await _httpClient.SendAsync(request, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError(
-                    "WhatsApp API returned {StatusCode} for {PhoneNumber}. Body: {Body}",
+                    "WhatsApp API {StatusCode} for {To}. Body: {Body}",
                     (int)response.StatusCode, to, responseBody);
 
                 return new WhatsAppSendResult
                 {
                     Success = false,
-                    Message = $"External WhatsApp API error: {(int)response.StatusCode} {response.ReasonPhrase}"
+                    Message = $"WhatsApp API error: {(int)response.StatusCode}"
                 };
             }
 
             var providerMessageId = TryExtractMessageId(responseBody);
 
             _logger.LogInformation(
-                "WhatsApp message sent to {PhoneNumber}. ProviderMessageId: {ProviderMessageId}",
+                "WhatsApp sent to {To}. Id: {Id}",
                 to, providerMessageId ?? "n/a");
 
             return new WhatsAppSendResult
             {
-                Success           = true,
-                Message           = "Message sent successfully",
+                Success = true,
+                Message = "Message sent successfully",
                 ProviderMessageId = providerMessageId
-            };
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("WhatsApp send to {Recipient} was cancelled.", to);
-            return new WhatsAppSendResult
-            {
-                Success = false,
-                Message = "Send operation was cancelled"
-            };
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex,
-                "HTTP request failed while sending WhatsApp message to {Recipient}.", to);
-
-            return new WhatsAppSendResult
-            {
-                Success = false,
-                Message = $"HTTP request failed: {ex.Message}"
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
-                "Unexpected error while sending WhatsApp message to {Recipient}.", to);
-
+            _logger.LogError(ex, "Failed to send WhatsApp message to {To}", to);
             return new WhatsAppSendResult
             {
                 Success = false,
-                Message = $"Unexpected error: {ex.Message}"
+                Message = $"Failed to send WhatsApp message: {ex.Message}"
             };
         }
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Sets BaseAddress and the API-key header once, thread-safely.
-    /// Mutating BaseAddress after the first request throws, so we guard with a flag.
-    /// </summary>
-    private void EnsureClientInitialized(string baseUrl, string? apiKey)
-    {
-        if (_clientInitialized) return;
-
-        lock (_initLock)
-        {
-            if (_clientInitialized) return;
-
-            _httpClient.BaseAddress = new Uri(baseUrl.TrimEnd('/') + '/');
-
-            if (!string.IsNullOrWhiteSpace(apiKey))
-            {
-                _httpClient.DefaultRequestHeaders.Remove("X-Api-Key");
-                _httpClient.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
-            }
-
-            _clientInitialized = true;
-        }
-    }
-
-    /// <summary>
-    /// Attempts to extract a message ID from the API response JSON.
-    /// Tries common field names: "messageId", "id", "message_id".
-    /// Returns null if not found or on parse error.
-    /// </summary>
     private static string? TryExtractMessageId(string responseBody)
     {
-        if (string.IsNullOrWhiteSpace(responseBody)) return null;
+        if (string.IsNullOrWhiteSpace(responseBody))
+            return null;
 
         try
         {
-            using var doc  = JsonDocument.Parse(responseBody);
-            var       root = doc.RootElement;
+            using var doc = JsonDocument.Parse(responseBody);
+            var root = doc.RootElement;
 
-            foreach (var key in new[] { "messageId", "id", "message_id" })
-            {
-                if (root.TryGetProperty(key, out var value) &&
-                    value.ValueKind == JsonValueKind.String)
-                {
-                    return value.GetString();
-                }
-            }
+            if (root.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String)
+                return id.GetString();
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
-            // Non-JSON response body — not an error worth surfacing
-            // (already logged at call site if status code was bad)
-            _ = ex;
+            // ignore
         }
 
         return null;
     }
 
-    /// <summary>
-    /// Strips all non-digit characters from a phone number.
-    /// E.g. "+1 (555) 123-4567" → "15551234567"
-    /// </summary>
     private static string NormalizePhoneNumber(string phoneNumber) =>
         new(phoneNumber.Where(char.IsDigit).ToArray());
 }
