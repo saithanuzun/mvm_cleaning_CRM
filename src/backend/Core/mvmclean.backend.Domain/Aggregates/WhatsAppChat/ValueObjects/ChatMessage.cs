@@ -5,8 +5,6 @@ namespace mvmclean.backend.Domain.Aggregates.WhatsAppChat.ValueObjects;
 
 public class ChatMessage : ValueObject
 {
-    public Guid Id { get; private set; }
-    public Guid WhatsAppChatId { get; private set; }
     public ChatMessageRole Role { get; private set; }
     public string Content { get; private set; } = string.Empty;
     public string? ExternalMessageId { get; private set; }
@@ -18,7 +16,6 @@ public class ChatMessage : ValueObject
         string? externalMessageId = null,
         DateTime? sentAt = null)
     {
-        Id = Guid.NewGuid();
         Role = role;
         Content = content;
         ExternalMessageId = externalMessageId;
@@ -29,6 +26,6 @@ public class ChatMessage : ValueObject
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {
-        yield return Id;
+        yield return null;
     }
 }

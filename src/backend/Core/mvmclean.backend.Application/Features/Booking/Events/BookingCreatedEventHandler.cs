@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -60,8 +61,9 @@ public class BookingCreatedEventHandler : INotificationHandler<BookingCreatedEve
 
         try
         {
+            var number = PhoneNormalizer.ToUkInternational(notification.PhoneNumber.Value);
             var result = await _whatsAppService.SendMessageAsync(
-                notification.PhoneNumber.Value,
+                number,
                 welcomeMessage,
                 cancellationToken);
 
@@ -80,5 +82,47 @@ public class BookingCreatedEventHandler : INotificationHandler<BookingCreatedEve
                 "Booking welcome WhatsApp could not be sent to {Phone}",
                 notification.PhoneNumber.Value);
         }
+    }
+    
+    
+}
+
+
+
+public static class PhoneNormalizer
+{
+    public static string ToUkInternational(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return null;
+
+        // Remove everything except digits
+        string digits = Regex.Replace(input, @"\D", "");
+
+        if (digits.Length == 0)
+            return null;
+
+        // Case 1: already starts with 44
+        if (digits.StartsWith("44"))
+        {
+            return digits;
+        }
+
+        // Case 2: starts with 0 (UK local format)
+        if (digits.StartsWith("0"))
+        {
+            digits = digits.Substring(1);
+            return "44" + digits;
+        }
+
+        // Case 3: missing 0 but is UK local number (10 digits typical mobile)
+        // e.g. 7862254412 → assume UK mobile
+        if (digits.Length == 10)
+        {
+            return "44" + digits;
+        }
+
+        // Fallback: just prepend 44 if it looks like UK number
+        return "44" + digits;
     }
 }

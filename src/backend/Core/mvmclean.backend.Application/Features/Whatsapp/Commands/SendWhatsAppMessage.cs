@@ -74,10 +74,7 @@ public class SendWhatsAppMessageHandler : IRequestHandler<SendWhatsAppMessageReq
 
         chat.AddAssistantMessage(request.Message, result.ProviderMessageId);
 
-        if (isNewChat)
-            await _whatsAppChatRepository.AddAsync(chat);
-        else
-            await _whatsAppChatRepository.UpdateAsync(chat);
+        await _whatsAppChatRepository.SaveChatAsync(chat, isNewChat);
 
         return new SendWhatsAppMessageResponse
         {

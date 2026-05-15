@@ -203,11 +203,6 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
             ? DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).UtcDateTime
             : null;
 
-    private async Task SaveChatAsync(WhatsAppChat chat, bool isNewChat)
-    {
-        if (isNewChat)
-            await _whatsAppChatRepository.AddAsync(chat);
-        else
-            await _whatsAppChatRepository.UpdateAsync(chat);
-    }
+    private Task SaveChatAsync(WhatsAppChat chat, bool isNewChat) =>
+        _whatsAppChatRepository.SaveChatAsync(chat, isNewChat);
 }
