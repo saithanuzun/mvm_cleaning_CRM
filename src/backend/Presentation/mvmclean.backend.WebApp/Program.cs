@@ -15,6 +15,13 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("ExternalWhatsAppApi", (sp, client) =>
+{
+    var baseUrl = sp.GetRequiredService<IConfiguration>()["WhatsApp:ExternalApiBaseUrl"];
+    if (!string.IsNullOrWhiteSpace(baseUrl))
+        client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+});
+builder.Services.AddHttpClient("LlmApi");
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;

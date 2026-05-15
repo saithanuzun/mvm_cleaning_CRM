@@ -10,6 +10,7 @@ using mvmclean.backend.Domain.Aggregates.Invoice;
 using mvmclean.backend.Domain.Aggregates.Promotion;
 using mvmclean.backend.Domain.Aggregates.SeoPage;
 using mvmclean.backend.Domain.Aggregates.Service;
+using mvmclean.backend.Domain.Aggregates.WhatsAppChat;
 using mvmclean.backend.Infrastructure.InvoicingService;
 using mvmclean.backend.Infrastructure.Persistence;
 using mvmclean.backend.Infrastructure.Persistence.Repositories;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         serviceCollection.AddScoped<ISeoPageRepository, SeoPageRepository>();
         serviceCollection.AddScoped<IServiceRepository, ServiceRepository>();
         serviceCollection.AddScoped<IContactRepository, ContactRepository>();
+        serviceCollection.AddScoped<IWhatsAppChatRepository, WhatsAppChatRepository>();
 
 
         // Register infrastructure services
@@ -80,6 +82,9 @@ public static class DependencyInjection
 
         // Register SMS service
         serviceCollection.AddScoped<ISmsService, SmsService>();
+
+        serviceCollection.AddScoped<IWhatsAppService, WhatsAppService>();
+        serviceCollection.AddScoped<ILlmService, LlmService>();
 
         // Register database seeder
         serviceCollection.AddScoped<DatabaseSeeder>();
