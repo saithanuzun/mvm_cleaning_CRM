@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Configuration;
+using mvmclean.backend.Application.Features.Whatsapp.Models;
 using mvmclean.backend.Application.Services;
 using mvmclean.backend.Domain.Aggregates.WhatsAppChat;
 using mvmclean.backend.Domain.Aggregates.WhatsAppChat.Enums;
@@ -10,9 +11,11 @@ public class HandleIncomingWhatsAppMessageRequest : IRequest<HandleIncomingWhats
 {
     public string? MessageId { get; set; }
     public string From { get; set; } = string.Empty;
-    public string? ContactName { get; set; }
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string ChatJid { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
-    public string? Timestamp { get; set; }
+    public long UnixTimestamp { get; set; }
+    public bool IsGroup { get; set; }
     public string? ConversationId { get; set; }
 }
 
@@ -23,6 +26,7 @@ public class HandleIncomingWhatsAppMessageResponse
     public string? Reply { get; set; }
     public string? MessageId { get; set; }
     public bool SentViaExternalApi { get; set; }
+    public bool AiTriggered { get; set; }
     public Guid? ChatId { get; set; }
 }
 
@@ -33,6 +37,8 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
     private readonly IWhatsAppChatRepository _whatsAppChatRepository;
     private readonly bool _autoSendReply;
     private readonly int _maxHistoryMessages;
+    private readonly string _aiTriggerPrefix;
+    private readonly string _defaultBotReply;
 
     public HandleIncomingWhatsAppHandler(
         ILlmService llmService,
@@ -43,8 +49,11 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
         _llmService = llmService;
         _whatsAppService = whatsAppService;
         _whatsAppChatRepository = whatsAppChatRepository;
-        _autoSendReply = true; //configuration.GetValue("WhatsApp:AutoSendReply", true);
-        _maxHistoryMessages = 20; //configuration.GetValue("Llm:MaxHistoryMessages", 20);
+        _autoSendReply = configuration.GetValue("WhatsApp:AutoSendReply", true);
+        _maxHistoryMessages = configuration.GetValue("Llm:MaxHistoryMessages", 20);
+        _aiTriggerPrefix = configuration["WhatsApp:AiTriggerPrefix"] ?? "emma";
+        _defaultBotReply = configuration["WhatsApp:DefaultBotReply"]
+            ?? "Hi! Start your message with \"emma\" to chat with our AI assistant.";
     }
 
     public async Task<HandleIncomingWhatsAppMessageResponse> Handle(HandleIncomingWhatsAppMessageRequest request, CancellationToken cancellationToken)
@@ -54,7 +63,16 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
             return new HandleIncomingWhatsAppMessageResponse
             {
                 Success = false,
-                Message = "Sender phone number (from) is required"
+                Message = "Sender (from) is required"
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            return new HandleIncomingWhatsAppMessageResponse
+            {
+                Success = false,
+                Message = "Could not extract phone number from sender"
             };
         }
 
@@ -68,23 +86,44 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
         }
 
         var isNewChat = false;
-        var chat = await _whatsAppChatRepository.GetByPhoneNumberAsync(request.From);
+        var chat = await _whatsAppChatRepository.GetByPhoneNumberAsync(request.PhoneNumber);
         if (chat == null)
         {
             chat = WhatsAppChat.Create(
-                request.From,
-                request.ContactName,
-                request.ConversationId);
+                request.PhoneNumber,
+                externalConversationId: request.ChatJid,
+                isGroup: request.IsGroup);
             isNewChat = true;
         }
         else
         {
-            chat.UpdateContactName(request.ContactName);
-            chat.SetExternalConversationId(request.ConversationId);
+            chat.SetExternalConversationId(request.ChatJid);
+            chat.SetIsGroup(request.IsGroup);
         }
 
-        chat.AddUserMessage(request.Message, request.MessageId);
+        chat.AddUserMessage(request.Message, request.MessageId, ToUtc(request.UnixTimestamp));
 
+        if (!ShouldTriggerAi(request.Message))
+        {
+            var botReply = _defaultBotReply;
+            chat.AddAssistantMessage(botReply);
+            await SaveChatAsync(chat, isNewChat);
+
+            var sent = await TrySendReplyAsync(request.From, botReply, cancellationToken);
+
+            return new HandleIncomingWhatsAppMessageResponse
+            {
+                Success = true,
+                Message = "Message stored; default bot reply sent",
+                Reply = botReply,
+                MessageId = request.MessageId,
+                SentViaExternalApi = sent.Sent,
+                AiTriggered = false,
+                ChatId = chat.Id
+            };
+        }
+
+        var promptForAi = StripAiTriggerPrefix(request.Message);
         var history = chat.GetRecentMessages(_maxHistoryMessages)
             .Select(m => new LlmChatHistoryMessage
             {
@@ -95,8 +134,7 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
 
         var llmResult = await _llmService.GenerateReplyAsync(new LlmChatRequest
         {
-            UserMessage = request.Message,
-            ContactName = chat.ContactName,
+            UserMessage = promptForAi,
             PhoneNumber = chat.PhoneNumber.Value,
             ConversationId = request.ConversationId ?? request.MessageId,
             History = history
@@ -111,47 +149,59 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
                 Success = false,
                 Message = llmResult.Message,
                 MessageId = request.MessageId,
+                AiTriggered = true,
                 ChatId = chat.Id
             };
         }
 
-        var sentViaExternalApi = false;
-        string? providerMessageId = null;
-
-        if (_autoSendReply)
-        {
-            var sendResult = await _whatsAppService.SendMessageAsync(request.From, llmResult.Reply, cancellationToken);
-            if (!sendResult.Success)
-            {
-                await SaveChatAsync(chat, isNewChat);
-
-                return new HandleIncomingWhatsAppMessageResponse
-                {
-                    Success = false,
-                    Message = sendResult.Message,
-                    Reply = llmResult.Reply,
-                    MessageId = request.MessageId,
-                    ChatId = chat.Id
-                };
-            }
-
-            sentViaExternalApi = true;
-            providerMessageId = sendResult.ProviderMessageId;
-        }
-
-        chat.AddAssistantMessage(llmResult.Reply, providerMessageId);
+        chat.AddAssistantMessage(llmResult.Reply);
         await SaveChatAsync(chat, isNewChat);
+
+        var sendResult = await TrySendReplyAsync(request.From, llmResult.Reply, cancellationToken);
 
         return new HandleIncomingWhatsAppMessageResponse
         {
             Success = true,
-            Message = "Incoming message processed and reply generated",
+            Message = "Incoming message processed; AI reply generated",
             Reply = llmResult.Reply,
             MessageId = request.MessageId,
-            SentViaExternalApi = sentViaExternalApi,
+            SentViaExternalApi = sendResult.Sent,
+            AiTriggered = true,
             ChatId = chat.Id
         };
     }
+
+    private bool ShouldTriggerAi(string message)
+    {
+        var trimmed = message.TrimStart();
+        return trimmed.StartsWith(_aiTriggerPrefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string StripAiTriggerPrefix(string message)
+    {
+        var trimmed = message.TrimStart();
+        if (!trimmed.StartsWith(_aiTriggerPrefix, StringComparison.OrdinalIgnoreCase))
+            return message;
+
+        return trimmed[_aiTriggerPrefix.Length..].TrimStart();
+    }
+
+    private async Task<(bool Sent, string? ProviderMessageId)> TrySendReplyAsync(
+        string recipient,
+        string reply,
+        CancellationToken cancellationToken)
+    {
+        if (!_autoSendReply || string.IsNullOrWhiteSpace(reply))
+            return (false, null);
+
+        var sendResult = await _whatsAppService.SendMessageAsync(recipient, reply, cancellationToken);
+        return (sendResult.Success, sendResult.ProviderMessageId);
+    }
+
+    private static DateTime? ToUtc(long unixTimestamp) =>
+        unixTimestamp > 0
+            ? DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).UtcDateTime
+            : null;
 
     private async Task SaveChatAsync(WhatsAppChat chat, bool isNewChat)
     {

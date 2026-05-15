@@ -12,13 +12,17 @@ public class ChatMessage : ValueObject
     public string? ExternalMessageId { get; private set; }
     public DateTime SentAt { get; private set; }
 
-    public ChatMessage(ChatMessageRole role, string content, string? externalMessageId = null)
+    public ChatMessage(
+        ChatMessageRole role,
+        string content,
+        string? externalMessageId = null,
+        DateTime? sentAt = null)
     {
         Id = Guid.NewGuid();
         Role = role;
         Content = content;
         ExternalMessageId = externalMessageId;
-        SentAt = DateTime.UtcNow;
+        SentAt = sentAt ?? DateTime.UtcNow;
     }
 
     private ChatMessage() { }

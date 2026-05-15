@@ -7,22 +7,28 @@ namespace mvmclean.backend.Domain.Aggregates.WhatsAppChat;
 
 public class WhatsAppChat : AggregateRoot
 {
-    public PhoneNumber PhoneNumber { get; set; }
+    public PhoneNumber PhoneNumber { get; set; } = null!;
     public string? ContactName { get; private set; }
     public string? ExternalConversationId { get; private set; }
+    public bool IsGroup { get; private set; }
 
     private readonly List<ChatMessage> _messages = new();
     public IReadOnlyCollection<ChatMessage> Messages => _messages.AsReadOnly();
 
     private WhatsAppChat() { }
 
-    public static WhatsAppChat Create(string phoneNumber, string? contactName = null, string? externalConversationId = null)
+    public static WhatsAppChat Create(
+        string phoneNumber,
+        string? contactName = null,
+        string? externalConversationId = null,
+        bool isGroup = false)
     {
         return new WhatsAppChat
         {
             PhoneNumber = PhoneNumber.Create(phoneNumber),
             ContactName = contactName,
-            ExternalConversationId = externalConversationId
+            ExternalConversationId = externalConversationId,
+            IsGroup = isGroup
         };
     }
 
@@ -44,17 +50,26 @@ public class WhatsAppChat : AggregateRoot
         }
     }
 
-    public ChatMessage AddUserMessage(string content, string? externalMessageId = null)
+    public void SetIsGroup(bool isGroup)
     {
-        var message = new ChatMessage(ChatMessageRole.User, content, externalMessageId);
+        if (IsGroup == isGroup)
+            return;
+
+        IsGroup = isGroup;
+        MarkAsUpdated();
+    }
+
+    public ChatMessage AddUserMessage(string content, string? externalMessageId = null, DateTime? sentAt = null)
+    {
+        var message = new ChatMessage(ChatMessageRole.User, content, externalMessageId, sentAt);
         _messages.Add(message);
         MarkAsUpdated();
         return message;
     }
 
-    public ChatMessage AddAssistantMessage(string content, string? externalMessageId = null)
+    public ChatMessage AddAssistantMessage(string content, string? externalMessageId = null, DateTime? sentAt = null)
     {
-        var message = new ChatMessage(ChatMessageRole.Assistant, content, externalMessageId);
+        var message = new ChatMessage(ChatMessageRole.Assistant, content, externalMessageId, sentAt);
         _messages.Add(message);
         MarkAsUpdated();
         return message;

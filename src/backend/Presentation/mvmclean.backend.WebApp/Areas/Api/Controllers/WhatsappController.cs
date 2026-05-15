@@ -13,7 +13,8 @@ public class WhatsappController : BaseApiController
     }
 
     /// <summary>
-    /// Receives incoming messages from the external WhatsApp API, generates an LLM reply, and optionally sends it back.
+    /// Receives incoming messages from the external WhatsApp API.
+    /// AI replies only when the message starts with "emma" (configurable); otherwise a default bot reply is sent.
     /// </summary>
     [HttpPost("incoming")]
     public async Task<IActionResult> Incoming([FromBody] ExternalWhatsAppIncomingRequest request)
@@ -23,15 +24,7 @@ public class WhatsappController : BaseApiController
 
         try
         {
-            var response = await _mediator.Send(new HandleIncomingWhatsAppMessageRequest
-            {
-                MessageId = request.MessageId,
-                From = request.From,
-                ContactName = request.ContactName,
-                Message = request.Message,
-                Timestamp = request.Timestamp,
-                ConversationId = request.ConversationId
-            });
+            var response = await _mediator.Send(request.ToCommandRequest());
 
             if (!response.Success)
                 return Error(response.Message, 500);
@@ -40,7 +33,9 @@ public class WhatsappController : BaseApiController
             {
                 Reply = response.Reply ?? string.Empty,
                 MessageId = response.MessageId,
-                SentViaExternalApi = response.SentViaExternalApi
+                SentViaExternalApi = response.SentViaExternalApi,
+                AiTriggered = response.AiTriggered,
+                ChatId = response.ChatId
             }, response.Message);
         }
         catch (Exception ex)
@@ -67,7 +62,8 @@ public class WhatsappController : BaseApiController
 
             return Success(new
             {
-                providerMessageId = response.ProviderMessageId
+                providerMessageId = response.ProviderMessageId,
+                chatId = response.ChatId
             }, response.Message);
         }
         catch (Exception ex)

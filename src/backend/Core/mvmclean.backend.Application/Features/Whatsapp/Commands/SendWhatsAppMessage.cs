@@ -1,4 +1,5 @@
 using MediatR;
+using mvmclean.backend.Application.Features.Whatsapp.Models;
 using mvmclean.backend.Application.Services;
 using mvmclean.backend.Domain.Aggregates.WhatsAppChat;
 
@@ -51,6 +52,7 @@ public class SendWhatsAppMessageHandler : IRequestHandler<SendWhatsAppMessageReq
             };
         }
 
+        var phone = WhatsAppJidHelper.ExtractPhoneNumber(request.PhoneNumber);
         var result = await _whatsAppService.SendMessageAsync(request.PhoneNumber, request.Message, cancellationToken);
 
         if (!result.Success)
@@ -63,10 +65,10 @@ public class SendWhatsAppMessageHandler : IRequestHandler<SendWhatsAppMessageReq
         }
 
         var isNewChat = false;
-        var chat = await _whatsAppChatRepository.GetByPhoneNumberAsync(request.PhoneNumber);
+        var chat = await _whatsAppChatRepository.GetByPhoneNumberAsync(phone);
         if (chat == null)
         {
-            chat = WhatsAppChat.Create(request.PhoneNumber);
+            chat = WhatsAppChat.Create(phone);
             isNewChat = true;
         }
 

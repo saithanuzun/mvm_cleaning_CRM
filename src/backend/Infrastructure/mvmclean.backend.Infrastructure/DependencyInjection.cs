@@ -83,8 +83,9 @@ public static class DependencyInjection
         // Register SMS service
         serviceCollection.AddScoped<ISmsService, SmsService>();
 
-        serviceCollection.AddScoped<IWhatsAppService, WhatsAppService>();
-        serviceCollection.AddScoped<ILlmService, LlmService>();
+        // Typed HttpClient (preferred over IHttpClientFactory manual CreateClient)
+        serviceCollection.AddHttpClient<IWhatsAppService, WhatsAppService>();
+        serviceCollection.AddHttpClient<ILlmService, LlmService>();
 
         // Register database seeder
         serviceCollection.AddScoped<DatabaseSeeder>();

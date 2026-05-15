@@ -9,10 +9,19 @@ public class WhatsAppChatConfiguration : EntityConfiguration<WhatsAppChat>
     public override void Configure(EntityTypeBuilder<WhatsAppChat> builder)
     {
         base.Configure(builder);
-        
-        builder.OwnsOne(i => i.PhoneNumber, phone =>
+
+        builder.ToTable("WhatsAppChats");
+
+        builder.OwnsOne(c => c.PhoneNumber, phone =>
         {
+            phone.Property(p => p.Value)
+                .HasColumnName("PhoneNumber_Value")
+                .HasMaxLength(20)
+                .IsRequired();
         });
+
+        builder.HasIndex("PhoneNumber_Value")
+            .IsUnique();
 
         builder.Property(c => c.ContactName)
             .HasMaxLength(256);
@@ -20,10 +29,19 @@ public class WhatsAppChatConfiguration : EntityConfiguration<WhatsAppChat>
         builder.Property(c => c.ExternalConversationId)
             .HasMaxLength(128);
 
+        builder.Property(c => c.IsGroup)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.OwnsMany(c => c.Messages, messages =>
         {
+            messages.ToTable("ChatMessage");
+            messages.WithOwner().HasForeignKey("WhatsAppChatId");
+            messages.HasKey("WhatsAppChatId", "Id");
+
             messages.Property(m => m.Role)
                 .IsRequired();
+
             messages.Property(m => m.Content)
                 .IsRequired();
 

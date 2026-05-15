@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using mvmclean.backend.Application.Features.Whatsapp.Models;
 using mvmclean.backend.Application.Services;
 
 namespace mvmclean.backend.Infrastructure.Services;
@@ -43,7 +44,9 @@ public class WhatsAppService : IWhatsAppService
         var sendPath = _configuration["WhatsApp:SendPath"] ?? "messages/send";
         var apiKey   = _configuration["WhatsApp:ApiKey"];
 
-        var normalizedTo = NormalizePhoneNumber(toPhoneNumber);
+        var to = WhatsAppJidHelper.IsWhatsAppJid(toPhoneNumber)
+            ? toPhoneNumber
+            : NormalizePhoneNumber(toPhoneNumber);
 
         // ── Dev / staging: no external URL configured ──────────────────────────
         if (string.IsNullOrWhiteSpace(baseUrl))
@@ -51,7 +54,7 @@ public class WhatsAppService : IWhatsAppService
             _logger.LogInformation(
                 "WhatsApp send skipped (ExternalApiBaseUrl not configured). " +
                 "Recipient: {PhoneNumber} | Message: {Message}",
-                normalizedTo, message);
+                to, message);
 
             return new WhatsAppSendResult
             {
@@ -68,14 +71,16 @@ public class WhatsAppService : IWhatsAppService
         {
             var payload = new
             {
-                to          = normalizedTo,
-                phoneNumber = normalizedTo,
+                to,
+                phoneNumber = WhatsAppJidHelper.IsWhatsAppJid(to)
+                    ? WhatsAppJidHelper.ExtractPhoneNumber(to)
+                    : to,
                 message
             };
 
             _logger.LogDebug(
                 "Sending WhatsApp message to {PhoneNumber} via {BaseUrl}{Path}",
-                normalizedTo, baseUrl, sendPath);
+                to, baseUrl, sendPath);
 
             var response = await _httpClient.PostAsJsonAsync(
                 sendPath.TrimStart('/'), payload, cancellationToken);
@@ -86,7 +91,7 @@ public class WhatsAppService : IWhatsAppService
             {
                 _logger.LogError(
                     "WhatsApp API returned {StatusCode} for {PhoneNumber}. Body: {Body}",
-                    (int)response.StatusCode, normalizedTo, responseBody);
+                    (int)response.StatusCode, to, responseBody);
 
                 return new WhatsAppSendResult
                 {
@@ -99,7 +104,7 @@ public class WhatsAppService : IWhatsAppService
 
             _logger.LogInformation(
                 "WhatsApp message sent to {PhoneNumber}. ProviderMessageId: {ProviderMessageId}",
-                normalizedTo, providerMessageId ?? "n/a");
+                to, providerMessageId ?? "n/a");
 
             return new WhatsAppSendResult
             {
@@ -110,7 +115,7 @@ public class WhatsAppService : IWhatsAppService
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("WhatsApp send to {PhoneNumber} was cancelled.", normalizedTo);
+            _logger.LogWarning("WhatsApp send to {Recipient} was cancelled.", to);
             return new WhatsAppSendResult
             {
                 Success = false,
@@ -120,7 +125,7 @@ public class WhatsAppService : IWhatsAppService
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex,
-                "HTTP request failed while sending WhatsApp message to {PhoneNumber}.", normalizedTo);
+                "HTTP request failed while sending WhatsApp message to {Recipient}.", to);
 
             return new WhatsAppSendResult
             {
@@ -131,7 +136,7 @@ public class WhatsAppService : IWhatsAppService
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Unexpected error while sending WhatsApp message to {PhoneNumber}.", normalizedTo);
+                "Unexpected error while sending WhatsApp message to {Recipient}.", to);
 
             return new WhatsAppSendResult
             {

@@ -44,9 +44,9 @@ public class LlmService : ILlmService
 
         var apiUrl      = _configuration["Llm:ApiUrl"];
         var apiKey      = _configuration["Llm:ApiKey"];
-        var model       = _configuration["Llm:Model"] ?? "gpt-4o-mini";
+        var model       = _configuration["Llm:Model"] ?? "gemini";
         var systemPrompt = _configuration["Llm:SystemPrompt"]
-            ?? "You are a helpful assistant for MvM Cleaning, a professional carpet and upholstery cleaning company in the UK. Answer concisely and help customers with bookings and services.";
+            ?? "You are Emma, the WhatsApp assistant for MvM Cleaning, a professional carpet, sofa, and upholstery cleaning company in the UK. Answer concisely. For all services, pricing, coverage, and booking information, use only accurate details from https://www.mvmcleaning.com — do not invent prices or services. If unsure, offer to have a team member follow up.";
 
         // ── Dev / staging: no API URL configured ──────────────────────────────
         if (string.IsNullOrWhiteSpace(apiUrl))
