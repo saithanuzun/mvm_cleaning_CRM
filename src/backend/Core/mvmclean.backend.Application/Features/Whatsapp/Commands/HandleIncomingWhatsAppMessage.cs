@@ -49,8 +49,8 @@ public class HandleIncomingWhatsAppHandler : IRequestHandler<HandleIncomingWhats
         _llmService = llmService;
         _whatsAppService = whatsAppService;
         _whatsAppChatRepository = whatsAppChatRepository;
-        _autoSendReply = configuration.GetValue("WhatsApp:AutoSendReply", true);
-        _maxHistoryMessages = configuration.GetValue("Llm:MaxHistoryMessages", 20);
+        _autoSendReply = true;
+        _maxHistoryMessages = 20;
         _aiTriggerPrefix = configuration["WhatsApp:AiTriggerPrefix"] ?? "emma";
         _defaultBotReply = configuration["WhatsApp:DefaultBotReply"]
             ?? "Hi! Start your message with \"emma\" to chat with our AI assistant.";

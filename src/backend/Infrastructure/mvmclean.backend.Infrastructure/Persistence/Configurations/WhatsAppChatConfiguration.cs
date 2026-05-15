@@ -20,9 +20,6 @@ public class WhatsAppChatConfiguration : EntityConfiguration<WhatsAppChat>
                 .IsRequired();
         });
 
-        builder.HasIndex("PhoneNumber_Value")
-            .IsUnique();
-
         builder.Property(c => c.ContactName)
             .HasMaxLength(256);
 
@@ -35,10 +32,6 @@ public class WhatsAppChatConfiguration : EntityConfiguration<WhatsAppChat>
 
         builder.OwnsMany(c => c.Messages, messages =>
         {
-            messages.ToTable("ChatMessage");
-            messages.WithOwner().HasForeignKey("WhatsAppChatId");
-            messages.HasKey("WhatsAppChatId", "Id");
-
             messages.Property(m => m.Role)
                 .IsRequired();
 

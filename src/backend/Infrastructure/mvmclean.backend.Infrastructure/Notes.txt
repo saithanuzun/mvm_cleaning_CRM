@@ -1,5 +1,4 @@
 
-
 dotnet ef migrations add InitialCreate \
     --project src/backend/Infrastructure/mvmclean.backend.Infrastructure \
     --startup-project src/backend/Presentation/mvmclean.backend.WebApp \
@@ -8,3 +7,5 @@ dotnet ef migrations add InitialCreate \
 dotnet ef database update \
     --project src/backend/Infrastructure/mvmclean.backend.Infrastructure \
     --startup-project src/backend/Presentation/mvmclean.backend.WebApp
+    
+    

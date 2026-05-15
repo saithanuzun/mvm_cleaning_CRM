@@ -71,11 +71,10 @@ public class WhatsAppService : IWhatsAppService
         {
             var payload = new
             {
-                to,
-                phoneNumber = WhatsAppJidHelper.IsWhatsAppJid(to)
+                to = WhatsAppJidHelper.IsWhatsAppJid(to)
                     ? WhatsAppJidHelper.ExtractPhoneNumber(to)
                     : to,
-                message
+                text = message
             };
 
             _logger.LogDebug(
