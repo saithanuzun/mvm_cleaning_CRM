@@ -101,7 +101,7 @@
         var noindex = (ViewData["NoIndex"] as bool?) ?? false;
         var ogTitle = (ViewData["OgTitle"] as string) ?? title;
         var ogDesc = (ViewData["OgDescription"] as string) ?? metaDescription;
-        var ogImage = (ViewData["OgImage"] as string) ?? "https://www.mvmcleaning.com/img/logo.png";
+        var ogImage = (ViewData["OgImage"] as string) ?? "https://www.mvmcleaning.com/img/logo.jpg";
     }
 
     <!-- Primary Meta Tags -->
@@ -112,7 +112,7 @@
     <meta name="robots" content="@(noindex ? "noindex, nofollow" : "index, follow")">
 
     <!-- Favicon -->
-    <link href="/img/logo.png" rel="icon" type="image/png">
+    <link href="/img/logo.jpg" rel="icon" type="image/png">
 
     <!-- Geo Tags -->
     <meta name="geo.region" content="GB-LEE"/>
@@ -146,7 +146,7 @@
             "@@context": "https://schema.org",
             "@@type": "LocalBusiness",
             "name": "MvM Cleaning",
-            "image": "https://www.mvmcleaning.com/img/logo.png",
+            "image": "https://www.mvmcleaning.com/img/logo.jpg",
             "url": "https://www.mvmcleaning.com",
             "telephone": "+44-7405-392635",
             "priceRange": "££",

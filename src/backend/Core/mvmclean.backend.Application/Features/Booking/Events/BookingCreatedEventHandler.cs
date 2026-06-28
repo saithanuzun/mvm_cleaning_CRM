@@ -37,7 +37,8 @@ public class BookingCreatedEventHandler : INotificationHandler<BookingCreatedEve
                 telephoneNumber: notification.PhoneNumber.Value
             );
 
-            await SendBookingWelcomeWhatsAppAsync(notification, cancellationToken);
+            // TODO: enable whatsapp
+            //await SendBookingWelcomeWhatsAppAsync(notification, cancellationToken);
 
             _logger.LogInformation(
                 "Booking created event handled: BookingId {BookingId}, Postcode {Postcode}, Phone {Phone}",
@@ -57,7 +58,8 @@ public class BookingCreatedEventHandler : INotificationHandler<BookingCreatedEve
         CancellationToken cancellationToken)
     {
         var welcomeMessage = _configuration["WhatsApp:BookingWelcomeMessage"]
-            ?? "Welcome to MvM Cleaning Shop! I'm Emma, your WhatsApp assistant. Ask me anything about our services — start your message with \"emma\" and I'll help you.";
+            ?? "Welcome to MvM Cleaning Shop! I'm Emma, your WhatsApp assistant. Ask me anything about our services — start your message with \"emma\" and I'll help you. ->" +
+             notification.Postcode;
 
         try
         {
