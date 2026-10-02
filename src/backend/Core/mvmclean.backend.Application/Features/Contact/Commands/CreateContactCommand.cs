@@ -40,6 +40,23 @@ public class CreateContactHandler : IRequestHandler<CreateContactCommand, Create
                 message: request.Message
             );
 
+            //todo: spam contact
+            var found = await _contactRepository.FirstOrDefaultAsync(i =>
+                i.Email == contact.Email ||
+                (!string.IsNullOrWhiteSpace(contact.PhoneNumber) &&
+                 i.PhoneNumber == contact.PhoneNumber) ||
+                i.Message == contact.Message);
+            
+            if (found is not null)
+            {
+                return new CreateContactResponse
+                {
+                    Success = false,
+                    Message = $"Error creating contact: SPAM",
+                    ContactId = null
+                };
+            }
+                
             await _contactRepository.AddAsync(contact);
 
             return new CreateContactResponse

@@ -367,6 +367,30 @@ public static class SeoPageSeedData
                         "Rug Cleaning"
                     }
                 }
+            },
+            {
+                "Nottingham", new CityConfig
+                {
+                    City = "Nottingham",
+                    Areas = new[]
+                    {
+                        "City Centre", "West Bridgford", "Beeston", "Arnold", "Carlton",
+                        "Bulwell", "Basford", "Mapperley", "Sherwood", "Sneinton",
+                        "Lenton", "Radford", "Hyson Green", "Wollaton", "Bramcote",
+                        "Stapleford", "Long Eaton", "Hucknall", "Bestwood", "Gedling",
+                        "Netherfield", "Colwick", "Chilwell", "Toton", "Attenborough",
+                        "Ruddington", "Clifton", "Wilford", "Dunkirk", "Meadows",
+                        "St Anns", "Bakersfield", "Daybrook", "Woodthorpe",
+                        "Aspley", "Bilborough", "Strelley", "Cinderhill", "Nuthall",
+                        "Kimberley", "Awsworth", "Eastwood", "Bingham", "Cotgrave",
+                        "Keyworth", "Tollerton", "Gamston", "Edwalton", "Compton Acres"
+                    },
+                    Services = new[]
+                    {
+                        "Carpet Cleaning", "Sofa Cleaning", "Mattress Cleaning", "Stain Removal", "Upholstery Cleaning",
+                        "Rug Cleaning"
+                    }
+                }
             }
         };
     }
@@ -377,20 +401,38 @@ public static class SeoPageSeedData
     /// </summary>
     public static List<SeoPage> GenerateAllSeoPages()
     {
-        var pages = new List<SeoPage>();
-        var citiesConfig = GetCitiesWithAreas();
+        return GenerateSeoPagesFromConfigs(GetCitiesWithAreas().Values.ToList());
+    }
 
-        foreach (var cityEntry in citiesConfig)
+    /// <summary>
+    /// Generate SEO pages for a specific city only.
+    /// Use this to seed a single city without affecting existing data.
+    /// </summary>
+    public static List<SeoPage> GenerateSeoPagesForCity(string cityName)
+    {
+        var citiesConfig = GetCitiesWithAreas();
+        if (!citiesConfig.TryGetValue(cityName, out var cityConfig))
         {
-            var cityConfig = cityEntry.Value;
+            return new List<SeoPage>();
+        }
+
+        return GenerateSeoPagesFromConfigs(new List<CityConfig> { cityConfig });
+    }
+
+    private static List<SeoPage> GenerateSeoPagesFromConfigs(List<CityConfig> configs)
+    {
+        var pages = new List<SeoPage>();
+
+        foreach (var cityConfig in configs)
+        {
             var servicesList = cityConfig.Services.ToList();
             var areasList = cityConfig.Areas.ToList();
 
-            // 1. Create CityOnly page (e.g., /leicester)
+            // 1. Create CityOnly page (e.g., /nottingham)
             var cityPage = SeoPage.CreateSeoPage(cityConfig.City);
             pages.Add(cityPage);
 
-            // 2. Create CityService pages (e.g., /leicester/carpet-cleaning)
+            // 2. Create CityService pages (e.g., /nottingham/carpet-cleaning)
             foreach (var service in servicesList)
             {
                 var cityServicePage = SeoPage.CreateSeoPage(cityConfig.City);
@@ -398,7 +440,7 @@ public static class SeoPageSeedData
                 pages.Add(cityServicePage);
             }
 
-            // 3. Create CityArea pages (e.g., /leicester/wigston)
+            // 3. Create CityArea pages (e.g., /nottingham/beeston)
             foreach (var area in areasList)
             {
                 var cityAreaPage = SeoPage.CreateSeoPage(cityConfig.City);
@@ -406,7 +448,7 @@ public static class SeoPageSeedData
                 pages.Add(cityAreaPage);
             }
 
-            // 4. Create CityAreaService pages (e.g., /leicester/wigston/carpet-cleaning)
+            // 4. Create CityAreaService pages (e.g., /nottingham/beeston/carpet-cleaning)
             foreach (var area in areasList)
             {
                 foreach (var service in servicesList)

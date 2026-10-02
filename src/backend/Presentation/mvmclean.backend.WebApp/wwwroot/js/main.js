@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
     "use strict";
 
     // Dropdown on mouse hover
@@ -41,48 +41,74 @@
 
 
     // Testimonials carousel
-    $(".testimonial-carousel").owlCarousel({
-        autoplay: true,
-        smartSpeed: 1000,
-        dots: true,
-        loop: true,
-        margin: 30,
-        responsive: {
-            0:{
-                items:1
-            },
-            576:{
-                items:1
-            },
-            768:{
-                items:2
-            },
-            992:{
-                items:3
+    if ($.fn.owlCarousel) {
+        $(".testimonial-carousel").owlCarousel({
+            autoplay: true,
+            smartSpeed: 1000,
+            dots: true,
+            loop: true,
+            margin: 30,
+            responsive: {
+                0:{ items:1 },
+                576:{ items:1 },
+                768:{ items:2 },
+                992:{ items:3 }
             }
-        }
-    });
+        });
+    }
+
+    // Trusted businesses carousel – same behaviour as testimonial carousel
+    var $trustedBusinesses = $(".trusted-business-carousel");
+
+    if ($.fn.owlCarousel) {
+        $trustedBusinesses.owlCarousel({
+            autoplay: true,
+            smartSpeed: 1000,
+            dots: true,
+            loop: true,
+            margin: 30,
+            responsive: {
+                0:   { items: 1 },
+                576: { items: 1 },
+                768: { items: 2 },
+                992: { items: 3 }
+            }
+        });
+    } else {
+        // Fallback: swipeable scroll if Owl is unavailable
+        $trustedBusinesses.addClass("trusted-business-carousel--fallback");
+        var trustedBusinessTimer;
+        var advanceTrustedBusinesses = function () {
+            var rail = $trustedBusinesses.get(0);
+            if (!rail || rail.matches(":hover") || rail.matches(":focus-within")) return;
+            var nextLeft = rail.scrollLeft + rail.clientWidth * 0.8;
+            if (nextLeft + rail.clientWidth >= rail.scrollWidth) nextLeft = 0;
+            rail.scrollTo({ left: nextLeft, behavior: "smooth" });
+        };
+        trustedBusinessTimer = window.setInterval(advanceTrustedBusinesses, 2500);
+        $trustedBusinesses.on("mouseenter focusin", function () {
+            window.clearInterval(trustedBusinessTimer);
+        }).on("mouseleave focusout", function () {
+            window.clearInterval(trustedBusinessTimer);
+            trustedBusinessTimer = window.setInterval(advanceTrustedBusinesses, 2500);
+        });
+    }
 
 
     // Related Post carousel
-    $(".related-carousel").owlCarousel({
-        autoplay: true,
-        smartSpeed: 1000,
-        dots: true,
-        loop: true,
-        margin: 30,
-        responsive: {
-            0:{
-                items:1
-            },
-            576:{
-                items:1
-            },
-            768:{
-                items:2
+    if ($.fn.owlCarousel) {
+        $(".related-carousel").owlCarousel({
+            autoplay: true,
+            smartSpeed: 1000,
+            dots: true,
+            loop: true,
+            margin: 30,
+            responsive: {
+                0:{ items:1 },
+                576:{ items:1 },
+                768:{ items:2 }
             }
-        }
-    });
+        });
+    }
 
 })(jQuery);
-

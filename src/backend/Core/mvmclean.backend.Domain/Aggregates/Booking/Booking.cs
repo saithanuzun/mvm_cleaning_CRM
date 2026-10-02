@@ -147,7 +147,7 @@ public class Booking : Core.BaseClasses.AggregateRoot
                 {
                     0 => 0m,      // 1st unit - full price
                     1 => 0.10m,   // 2nd unit - 10% off
-                    _ => 0.20m    // 3rd+ unit - 20% off
+                    _ => 0.20m    // 3rd+ units - 20% off
                 };
 
                 itemTotal += item.OriginalPrice! * (1m - discountRate);

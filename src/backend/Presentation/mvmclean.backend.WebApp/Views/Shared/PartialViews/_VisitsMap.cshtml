@@ -1,4 +1,5 @@
 @* _VisitsMap.cshtml - Free Map Solution *@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 <div class="container-fluid pt-5 pb-3">
     <div class="container">
@@ -55,15 +56,18 @@
     let markersCluster;
     let isMarkersVisible = true;
 
+    const cartoApiKey = '@Configuration["Carto:ApiKey"]';
+    const tileUrl = cartoApiKey 
+        ? `https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=${cartoApiKey}`
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png';
+
     // Tile layer options
     const tileLayers = {
-        light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        light: L.tileLayer(tileUrl, {
             attribution: '&copy; OpenStreetMap & CARTO',
             maxZoom: 20,
             subdomains: 'abcd'
         }),
-
-
     };
 
     // Define the cleaning icon using your carIcon.png

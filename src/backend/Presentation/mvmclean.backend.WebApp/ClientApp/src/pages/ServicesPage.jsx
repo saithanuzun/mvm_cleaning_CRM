@@ -2,7 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-const MIN_SPEND = 70;
+// LE3 3TT coordinates
+const BASE_LAT = 52.618074;
+const BASE_LON = -1.195061;
+
+function deg2rad(deg) {
+    return deg * (Math.PI / 180);
+}
+
+function getDistanceInMiles(lat1, lon1, lat2, lon2) {
+    const R = 3958.8; // Radius of the earth in miles
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
 
 const ServicesPage = ({ bookingData, updateBookingData }) => {
     const [services, setServices] = useState([]);
@@ -11,6 +29,7 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
     const [error, setError] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
     const [categories, setCategories] = useState([]);
+    const [minSpend, setMinSpend] = useState(49);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -25,6 +44,25 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
             try {
                 setLoading(true);
                 setError('');
+
+                // Calculate minimum spend based on distance from LE3 3TT
+                try {
+                    const postcodesRes = await fetch(`https://api.postcodes.io/postcodes/${bookingData.postcode.replace(/\s+/g, '')}`);
+                    const postcodesData = await postcodesRes.json();
+                    if (postcodesData && postcodesData.status === 200 && postcodesData.result) {
+                        const { latitude, longitude } = postcodesData.result;
+                        const distance = getDistanceInMiles(BASE_LAT, BASE_LON, latitude, longitude);
+                        if (distance < 15) {
+                            setMinSpend(49);
+                        } else if (distance >= 15 && distance < 30) {
+                            setMinSpend(90);
+                        } else {
+                            setMinSpend(120);
+                        }
+                    }
+                } catch (distErr) {
+                    console.error('Error calculating distance:', distErr);
+                }
 
                 const response = await api.services.getByPostcode(bookingData.postcode);
 
@@ -269,8 +307,8 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
             return;
         }
 
-        if (calculateTotal() < MIN_SPEND) {
-            setError(`A minimum spend of £${MIN_SPEND} is required to book. Please add £${(MIN_SPEND - calculateTotal()).toFixed(2)} more in services.`);
+        if (calculateTotal() < minSpend) {
+            setError(`A minimum spend of £${minSpend} is required to book. Please add £${(minSpend - calculateTotal()).toFixed(2)} more in services.`);
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -347,7 +385,7 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
                         <p className="text-amber-800 text-sm font-medium">
-                            Minimum booking spend: <span className="font-bold text-amber-900">£{MIN_SPEND}</span>. Bookings below this amount cannot be processed.
+                            Minimum booking spend: <span className="font-bold text-amber-900">£{minSpend}</span>. Bookings below this amount cannot be processed.
                         </p>
                     </div>
                 </div>
@@ -551,9 +589,9 @@ const ServicesPage = ({ bookingData, updateBookingData }) => {
                                             £{calculateTotal().toFixed(2)}
                                         </div>
                                         <div className="text-sm text-gray-500">Total Amount</div>
-                                        {calculateTotal() < MIN_SPEND && (
+                                        {calculateTotal() < minSpend && (
                                             <div className="text-xs text-amber-600 font-semibold mt-1">
-                                                £{(MIN_SPEND - calculateTotal()).toFixed(2)} more needed (min. £{MIN_SPEND})
+                                                £{(minSpend - calculateTotal()).toFixed(2)} more needed (min. £{minSpend})
                                             </div>
                                         )}
                                     </div>

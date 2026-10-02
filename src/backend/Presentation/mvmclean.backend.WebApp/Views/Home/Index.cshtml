@@ -1,4 +1,4 @@
-﻿<style>
+<style>
     /* Custom styles for the carousel */
     .carousel-mobile-full {
         width: 100%;
@@ -65,7 +65,8 @@
                     <div class="p-3 text-center" style="max-width: 1000px;">
                         <h4 class="text-white text-uppercase mb-md-3">MvM Carpet &amp; Sofa Cleaning</h4>
                         <h2 class="display-4 text-white mb-md-4">Carpet & Upholstery Care</h2>
-                        <a href="/shop" class="btn btn-primary py-md-3 px-md-5 mt-2">Book NOW!</a>
+                        <a href="/shop" class="btn btn-primary py-md-3 px-md-5 mt-2 mr-2">Book NOW!</a>
+                        <a href="/shop" class="btn btn-outline-light py-md-3 px-md-5 mt-2">See Prices</a>
                     </div>
                 </div>
             </div>
@@ -77,7 +78,8 @@
                     <div class="p-3 text-center" style="max-width: 1000px;">
                         <h4 class="text-white text-uppercase mb-md-3">MvM Carpet & Sofa Cleaning</h4>
                         <h2 class="display-4 text-white mb-md-4">Highly Skilled Technicians</h2>
-                        <a href="/shop" class="btn btn-primary py-md-3 px-md-5 mt-2">Book NOW!</a>
+                        <a href="/shop" class="btn btn-primary py-md-3 px-md-5 mt-2 mr-2">Book NOW!</a>
+                        <a href="/shop" class="btn btn-outline-light py-md-3 px-md-5 mt-2">See Prices</a>
                     </div>
                 </div>
             </div>
@@ -203,11 +205,21 @@
 
 <div class="container mt-5">
     <div class="row">
-        <!-- Book Now Button -->
+        <!-- Book Now and See Prices Buttons -->
         <div class="col-md-8 mx-auto mb-3">
-            <a href="/shop" class="btn btn-primary btn-block py-3 px-5 w-100 text-uppercase font-weight-medium">
-                📅 Book Now!
-            </a>
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <a href="/shop" class="btn btn-primary btn-block py-3 px-5 w-100 text-uppercase font-weight-medium">
+                        📅 Book Now!
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a href="/shop"
+                        class="btn btn-secondary btn-block py-3 px-5 w-100 text-uppercase font-weight-medium">
+                        💷 See Prices
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -562,6 +574,8 @@
   }
 ]
 </script>
+
+@await Html.PartialAsync("PartialViews/_TrustedBusinesses")
 
 <!-- Testimonial Section -->
 <div class="container-fluid py-5">

@@ -409,7 +409,7 @@ public string CreateInvoiceHtml(decimal amount, string address, string name, Dat
                     <img src='https://www.mvmcleaning.com/img/Logopng.png' alt='MVM Cleaning Logo'>
                 </div>
                 <div class='company-info'>
-                    <h2>MVM CLEANING</h2>
+                    <h2>MVM Cleaning Services LTD</h2>
                     <p class='tagline'>Professional Cleaning Services</p>
                     <p class='contact'>
                         72 Darien Way<br>
@@ -488,9 +488,9 @@ public string CreateInvoiceHtml(decimal amount, string address, string name, Dat
                         Thank you for your business!<br><br>
 
                         <strong>Bank Details:</strong><br>
-                        Account Name: MVM Cleaning<br>
+                        Account Name: MVM Cleaning Services LTD<br>
                         Sort Code: 40-28-06<br>
-                        Account Number: 55418275<br>
+                        Account Number: 45458803<br>
                     </p>
                     <div class='thank-you'>
                         If you have any questions, please contact us.

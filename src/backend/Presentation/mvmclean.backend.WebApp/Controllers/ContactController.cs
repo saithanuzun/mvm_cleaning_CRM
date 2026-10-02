@@ -28,7 +28,7 @@ public class ContactController : BaseController
         [FromForm] string? website
         )
     {
-        if (!string.IsNullOrEmpty(website) || email == "zekisuquc419@gmail.com" || email == "charmaynesaunders62@gmail.com") // todo: create blacklist in database
+        if (!string.IsNullOrEmpty(website) || email == "zekisuquc419@gmail.com" || email == "charmaynesaunders62@gmail.com" || email == "arbenita_leona@hotmail.com" || email=="halitaandrew160@gmail.com") // todo: create blacklist in database
         {
             return BadRequest();
         }

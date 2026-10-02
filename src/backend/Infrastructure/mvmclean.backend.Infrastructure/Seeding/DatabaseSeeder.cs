@@ -1103,8 +1103,8 @@ public class DatabaseSeeder
         {
             _logger.LogInformation("Seeding SEO pages...");
 
-            var seoPages = SeoPageSeedData.GenerateAllSeoPages();
-            _logger.LogInformation($"Generated {seoPages.Count} SEO pages to seed");
+            var seoPages = SeoPageSeedData.GenerateSeoPagesForCity("Nottingham");
+            _logger.LogInformation($"Generated {seoPages.Count} SEO pages for Nottingham to seed");
 
             if (seoPages.Count == 0)
             {

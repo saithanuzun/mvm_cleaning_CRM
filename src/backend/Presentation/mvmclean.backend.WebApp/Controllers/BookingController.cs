@@ -37,7 +37,7 @@ public class BookingController : BaseController
             var request = new GetBookingByPhoneAndPostcodeRequest
             {
                 PhoneNumber = phoneNumber.Replace(" ",""),
-                Postcode = postcode
+                Postcode = postcode.Replace(" ", "").ToUpper()
             };
 
             var booking = await _mediator.Send(request);
