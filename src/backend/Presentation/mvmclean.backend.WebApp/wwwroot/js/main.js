@@ -33,11 +33,13 @@
     });
 
 
-    // Facts counter
-    $('[data-toggle="counter-up"]').counterUp({
-        delay: 10,
-        time: 2000
-    });
+    // Facts counter (the optional CounterUp asset may not be present)
+    if ($.fn.counterUp) {
+        $('[data-toggle="counter-up"]').counterUp({
+            delay: 10,
+            time: 2000
+        });
+    }
 
 
     // Testimonials carousel
@@ -63,7 +65,9 @@
     if ($.fn.owlCarousel) {
         $trustedBusinesses.owlCarousel({
             autoplay: true,
-            smartSpeed: 1000,
+            autoplayTimeout: 2500,
+            autoplayHoverPause: true,
+            smartSpeed: 700,
             dots: true,
             loop: true,
             margin: 30,
